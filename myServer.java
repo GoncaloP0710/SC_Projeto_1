@@ -155,11 +155,11 @@ public class myServer{
             // TODO: Todas alteracoes necessarias
         }
 
-	private String addUserToDomain(String userId, String domain){
-            String result = "OK";
-            // TODO: Todas as veridicacoes, ou seja, se pode ser adicionado ou nao. Fazer todas as alteracoes necessarias (incluindo a String result)
-            return result;
-	}
+        private String addUserToDomain(String userId, String domain){
+                String result = "OK";
+                // TODO: Todas as veridicacoes, ou seja, se pode ser adicionado ou nao. Fazer todas as alteracoes necessarias (incluindo a String result)
+                return result;
+        }
 
         /**
          * Obtem a temperatura emviada pelo user
@@ -174,7 +174,7 @@ public class myServer{
             } catch (IOException e) {
                 return null;
             }
-	}
+	    }
 
         /**
          * 
