@@ -203,10 +203,20 @@ public class myServer{
             outStream.writeObject("buffer");
         }
 
+        /**
+         * 
+         * @param inStream
+         */
         private void getImage(ObjectInputStream inStream) {
             // TODO
         }
 
+        /**
+         * 
+         * @param outStream
+         * @param userId
+         * @param deviceId
+         */
         private void sendImage(ObjectOutputStream outStream, String userId, Integer deviceId) {
             // TODO 
         }
