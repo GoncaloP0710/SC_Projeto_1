@@ -156,9 +156,9 @@ public class myServer{
         }
 
         private String addUserToDomain(String userId, String domain){
-                String result = "OK";
-                // TODO: Todas as veridicacoes, ou seja, se pode ser adicionado ou nao. Fazer todas as alteracoes necessarias (incluindo a String result)
-                return result;
+            String result = "OK";
+            // TODO: Todas as veridicacoes, ou seja, se pode ser adicionado ou nao. Fazer todas as alteracoes necessarias (incluindo a String result)
+            return result;
         }
 
         /**
