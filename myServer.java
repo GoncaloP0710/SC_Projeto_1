@@ -9,6 +9,7 @@ public class myServer{
 
     HashMap<String, String> mapUsers = new HashMap<>();
     HashMap<String, ArrayList<Integer>> mapDomains = new HashMap<>();
+    ArrayList<Domain> domains = new ArrayList<>();
 
     public static void main(String[] args) {
 		System.out.println("servidor: main");
