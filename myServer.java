@@ -8,7 +8,7 @@ import java.util.HashMap;
 public class myServer{
 
     HashMap<String, String> mapUsers = new HashMap<>();
-    HashMap<String, ArrayList<Integer>> mapDomains = new HashMap<>();
+    HashMap<String, ArrayList<Integer>> mapDevices = new HashMap<>();
     ArrayList<Domain> domains = new ArrayList<>();
 
     public static void main(String[] args) throws IOException {
@@ -69,6 +69,8 @@ public class myServer{
             try {
                 ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
                 ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
+
+                // TODO: Comportamento do servidor com o user
                 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -126,8 +128,8 @@ public class myServer{
             int deviceId = (int)inStream.readObject();
 
             // Verifica se existe outro IoTDevice aberto  e  autenticado  com  o  mesmo  par  (<user-id>,<dev-id>)
-            if (!mapDomains.get(userId).equals(null)) {
-                if (mapDomains.get(userId).contains(deviceId)) {
+            if (!mapDevices.get(userId).equals(null)) {
+                if (mapDevices.get(userId).contains(deviceId)) {
                     result = "NOK-DEVID";
                 }
             }
@@ -149,14 +151,65 @@ public class myServer{
             mapUsers.put(userId, senha);
         }
 
-        private void newDomain(String domainName) {
-            // TODO: Verificar se tal domain ja existe
-            File domainTempsLog = new File("ServerFiles/DomainTemps/" + domainName + ".txt"); // Criar ficheiro .txt com log das temperaturas desse domain
-            // TODO: Todas alteracoes necessarias
+
+        /**
+         * Cria domain se ainda nao existe
+         * 
+         * @param domainName
+         * @param userId
+         * @return OK se criado ou NOK se ja existe um domain com esse nome
+         * @throws IOException 
+         */
+        private String newDomain(String domainName, String userId) throws IOException {
+            boolean domainExist = false;
+            for (int i = 0; i < domains.size(); i++) {
+                if (domains.get(i).getName().equals(domainName)) {
+                    domainExist = true;
+                    break;
+                }
+            }
+            if (domainExist) {
+                return "NOK";
+            }else {
+                Domain newDomain = new Domain(userId, domainName);
+                domains.add(newDomain);
+                // Criar ficheiro .txt com log das temperaturas desse domain
+                File domainTempsLog = new File("ServerFiles/DomainTemps/" + domainName + ".txt");
+                // Mudar o ficheiro Domain.txt com a informacao necessaria
+                FileWriter myWriter = new FileWriter("ServerFiles/Domain.txt", true);
+                myWriter.write(domainName + ":" + userId + "\n");
+                myWriter.close();
+                
+                return "OK";
+            }
+
         }
 
-        private String addUserToDomain(String userId, String domain){
+        /**
+         * 
+         * @param userID the user's id
+         * @param domainName the domain's name 
+         * @return OK if user is added to domain, NOUSER if the user doesn't exist, NODM if domain doesn't exist or NOPERM sem permissoes
+         * @throws NullPointerException
+         */
+        private String addUserToDomain(String userId, String domainName) throws NullPointerException {
             String result = "OK";
+            boolean hasUser = mapUsers.containsKey(userId);
+            if(!hasUser) {
+                result = "NOUSER";
+                return result;
+            }
+            boolean hasDomain = false;
+            for(Domain domain: domains) {
+                if(domainName.equals(domain.getName())) {
+                    hasDomain = true;
+                    domain.addUser(userId);
+                }
+            }
+            if(!hasDomain) {
+                result = "NODM";
+            }
+            
             // TODO: Todas as veridicacoes, ou seja, se pode ser adicionado ou nao. Fazer todas as alteracoes necessarias (incluindo a String result)
             return result;
         }
@@ -184,7 +237,7 @@ public class myServer{
          * @throws IOException
          */
         private void sendDomainTemp(String domainName, ObjectOutputStream outStream) throws IOException {
-            if (mapDomains.get(domainName).equals(null)) {
+            if (mapDevices.get(domainName).equals(null)) {
                 outStream.writeObject("NODM");
                 return;
             }
