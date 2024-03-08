@@ -11,14 +11,27 @@ public class myServer{
     HashMap<String, ArrayList<Integer>> mapDomains = new HashMap<>();
     ArrayList<Domain> domains = new ArrayList<>();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 		System.out.println("servidor: main");
 		myServer server = new myServer();
 		server.startServer();
 	}
 
-	public void startServer (){
+	public void startServer () throws IOException{
 		ServerSocket sSoc = null;
+
+        // Atualizar mapUsers com base no .txt ------------------------------------------------------------
+        BufferedReader reader = new BufferedReader(new FileReader("ServerFiles/users.txt"));
+        String line;
+        // Reading text from the file users.txt, splitting by ':', and populating the HashMap mapUsers
+        while ((line = reader.readLine()) != null) {
+            String[] parts = line.split(":");
+            if (parts.length >= 2) {
+                mapUsers.put(parts[0].trim(), parts[1].trim());
+            }
+        }
+        reader.close();
+        // -------------------------------------------------------------------------------------------------
         
 		try {
 			sSoc = new ServerSocket(12345);
@@ -89,18 +102,6 @@ public class myServer{
         private String autentifyUserInfo(String userId, String senha) throws IOException {
             String result;
 
-            // Reading text from a file
-            // BufferedReader reader = new BufferedReader(new FileReader("ServerFiles/users.txt"));
-            // String line;
-
-            // Reading text from the file users.txt, splitting by ':', and populating the HashMap mapUsers
-            // while ((line = reader.readLine()) != null) {
-            //     String[] parts = line.split(":");
-            //     if (parts.length >= 2) {
-            //         mapUsers.put(parts[0].trim(), parts[1].trim());
-            //     }
-            // }
-
             // Verify whether the user already exists, is new, or has entered an incorrect password
             if (mapUsers.get(userId).equals(null)) {
                 result = "OK-NEW-USER";
@@ -109,8 +110,6 @@ public class myServer{
             } else {
                 result = "WRONG-PWD";
             }
-
-            // reader.close();
             return result;
         }
 
