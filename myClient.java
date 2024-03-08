@@ -109,14 +109,18 @@ public class myClient {
     }
 
     public String interfaceIO(){
-        String s = "Comandos: \n";
+        String s = "--------------------------------------------------------------------\n";
+        s.concat("Comandos: \n");
+        s.concat("\n");
         s.concat("CREATE <dominio> - Cria um novo dominio com o nome escolhido \n");
         s.concat("ADD <username> <dominio> - Adiciona o utilizador escolhido ao dominio escolhido \n");
         s.concat("RD <dominio> - Regista o dispositivo atual ao dominio escolhido \n");
         s.concat("ET <float> - Envia o valor float da temperatura \n");
         s.concat("EI <filename.jpg> - Abre o ficheiro do cliente com o nome escolhido \n");
         s.concat("RT <dominio> - Obtem os dados da temperatura guardados no servidor de todos os dispositivos dentro do dominio \n");
-        s.concat("RI \n");
+        s.concat("RI <user_id>:<dev_id> - Permite obter a imagem do dispositivo escolhido\n");
+        s.concat("\n");
+        s.concat("--------------------------------------------------------------------\n");
         return s;
     }
 

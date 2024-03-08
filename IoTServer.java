@@ -1,23 +1,36 @@
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
-public class myServer{
+import javax.imageio.ImageIO;
+
+public class IoTServer{
 
     HashMap<String, String> mapUsers = new HashMap<>();
     HashMap<String, ArrayList<Integer>> mapDevices = new HashMap<>();
     ArrayList<Domain> domains = new ArrayList<>();
 
     public static void main(String[] args) throws IOException {
-		System.out.println("servidor: main");
-		myServer server = new myServer();
-		server.startServer();
+        try {
+            System.out.println("servidor: main");
+            IoTServer server = new IoTServer();
+            server.startServer(Integer.parseInt(args[0]));
+        } catch (NumberFormatException e) {
+            System.err.println("Port number is not valid");
+            System.exit(-1);
+        } catch (IOException e) {
+            System.err.println("Couldn't start server");
+        }
 	}
 
-	public void startServer () throws IOException{
+	public void startServer (Integer socket) throws IOException{
 		ServerSocket sSoc = null;
 
         // Atualizar mapUsers com base no .txt ------------------------------------------------------------
@@ -30,12 +43,35 @@ public class myServer{
                 mapUsers.put(parts[0].trim(), parts[1].trim());
             }
         }
+        BufferedReader reader = new BufferedReader(new FileReader("ServerFiles/domains.txt"));
+        String line;
+        // Reading text from the file users.txt, splitting by ':', and populating the HashMap mapUsers
+        while ((line = reader.readLine()) != null) {
+            String[] parts = line.split(":");
+            String domainName = parts[0];
+            Domain domain = new Domain("",domainName);
+            for(int i = 1; i < parts.length(); i++) {
+                
+                String[] namesDev = parts[i].split("|");
+                String user = namesDev[0];
+                if(i == 1)
+                    domain.setOwner(user);
+                domain.addUser(user);
+                List<Integer> devices = new ArrayList<>();
+                for(int j = 1; j < namesDev; j++) {
+                    devices.add(Integer.parseInt(namesDev[j]));
+                    domain.addDevice(user, Integer.parseInt(namesDev[j]));
+                }
+                mapDevices.put(user,devices);
+            }
+            domains.add(domain);
+        }
         reader.close();
         // -------------------------------------------------------------------------------------------------
         
 		try {
-			sSoc = new ServerSocket(12345);
-		} catch (IOException e) {
+			sSoc = new ServerSocket(socket);
+		} catch (IOException | NullPointerException e) {
 			System.err.println(e.getMessage());
 			System.exit(-1);
 		}
@@ -157,32 +193,33 @@ public class myServer{
          * 
          * @param domainName
          * @param userId
+         * @param deviceId
          * @return OK se criado ou NOK se ja existe um domain com esse nome
          * @throws IOException 
          */
-        private String newDomain(String domainName, String userId) throws IOException {
-            boolean domainExist = false;
-            for (int i = 0; i < domains.size(); i++) {
-                if (domains.get(i).getName().equals(domainName)) {
-                    domainExist = true;
-                    break;
+        private String newDomain(String domainName, String owner, Integer deviceId) throws IOException {
+            for(Domain domain: domains) {
+                if (domain.getName().equals(domainName)) {
+                    return "NOK";
                 }
             }
-            if (domainExist) {
-                return "NOK";
-            }else {
-                Domain newDomain = new Domain(userId, domainName);
-                domains.add(newDomain);
-                // Criar ficheiro .txt com log das temperaturas desse domain
-                File domainTempsLog = new File("ServerFiles/DomainTemps/" + domainName + ".txt");
-                // Mudar o ficheiro Domain.txt com a informacao necessaria
-                FileWriter myWriter = new FileWriter("ServerFiles/Domain.txt", true);
-                myWriter.write(domainName + ":" + userId + "\n");
-                myWriter.close();
-                
-                return "OK";
-            }
-
+            
+            Domain newDomain = new Domain(owner, domainName);
+            newDomain.addDevice(owner, deviceId);
+            domains.add(newDomain);
+            
+            // Criar ficheiro .txt com log das temperaturas desse domain
+            File domainTempsLog = new File("ServerFiles/DomainTemps/" + domainName + ".txt");
+            // Mudar o ficheiro Domain.txt com a informacao necessaria
+            FileWriter myWriter = new FileWriter("ServerFiles/domains.txt", true);
+            
+            // ------------------------- TODO : Escrever no ficheiro
+            myWriter.write(domainName + ":" + owner + "\n");
+            // ------------------------------------------------------------------
+            
+            myWriter.close();
+            
+            return "OK";
         }
 
         /**
@@ -236,15 +273,30 @@ public class myServer{
          * @param outStream
          * @throws IOException
          */
-        private void sendDomainTemp(String domainName, ObjectOutputStream outStream) throws IOException {
-            if (mapDevices.get(domainName).equals(null)) {
+        private void sendDomainTemp(String domainName, ObjectOutputStream outStream, String userId, Integer deviceId) throws IOException {
+            
+            // Verifica se o domain existe
+            if (!domainExist(domainName)) {
                 outStream.writeObject("NODM");
                 return;
             }
 
-            // TODO: Verificar as permissoes e NODATA
+            // Verifica se o ficheiro existe
+            if (!dataExist("ServerFiles/DomainTemps" + domainName + ".txt")) {
+                outStream.writeObject("NODATA");
+                return;
+            }
 
-            // Diferente de como esta na TP -> Confirmar se esta bem
+            // Verifica se o user tem permissoes
+            for(Domain domain: domains) {
+                if (domain.hasPermissionToRead(userId, deviceId)) {
+                    break;
+                }
+                outStream.writeObject("NOPERM");
+                return;
+            }
+
+            // Diferente de como fiz na TP -> Confirmar se esta bem
             File fileToSend = new File("ServerFiles/DomainTemps/" + domainName + ".txt");
             long size = fileToSend.length();
             // ------------------------------------------------------------------------------------
@@ -259,19 +311,88 @@ public class myServer{
         /**
          * 
          * @param inStream
+         * @throws IOException 
          */
-        private void getImage(ObjectInputStream inStream) {
-            // TODO
+        private void getImage(ObjectInputStream inStream, String userId, Integer deviceId) throws IOException {
+            // Recebe tamanho do array
+            long size = inStream.readLong();
+            
+            byte[] array = new byte[(int) size];
+            // Recebe array com a imagem
+            inStream.readFully(array);
+            
+            Path path = Paths.get("ServerFiles/ImageFiles/" + userId + Integer.toString(deviceId) + ".jpg");
+            Files.write(path, array);
         }
 
         /**
          * 
+         * 
+         * https://www.tutorialspoint.com/How-to-convert-Image-to-Byte-Array-in-java
          * @param outStream
          * @param userId
          * @param deviceId
+         * @throws IOException 
          */
-        private void sendImage(ObjectOutputStream outStream, String userId, Integer deviceId) {
-            // TODO 
+        private void sendImage(ObjectOutputStream outStream, String userId, Integer deviceId) throws IOException {
+
+            // Verifica se esse device id não existe
+            if (mapDevices.get(userId).equals(null)) {
+                outStream.writeObject("NOID");
+                return;
+            } else if (!mapDevices.get(userId).contains(deviceId)) {
+                outStream.writeObject("NOID");
+                return;
+            }
+
+            // Verifica se o ficheiro existe
+            if (!dataExist("ServerFiles/ImageFiles" + userId + Integer.toString(deviceId) + ".jpg")) {
+                outStream.writeObject("NODATA");
+                return;
+            }
+
+            // Verifica se o user tem permissoes
+            for(Domain domain: domains) {
+                if (domain.hasPermissionToRead(userId, deviceId)) {
+                    break;
+                }
+                outStream.writeObject("NOPERM");
+                return;
+            }
+
+            // Envia a imagem
+            BufferedImage bImage = ImageIO.read(new File("ServerFiles/ImageFiles/" + userId + Integer.toString(deviceId) + ".jpg"));
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ImageIO.write(bImage, "jpg", bos );
+            byte [] data = bos.toByteArray();
+            
+            outStream.writeLong(data.length);
+            outStream.write(data);
+        }
+
+        /**
+         * Verifica se existe um domain com o nome dado
+         * 
+         * @param domainName
+         * @return true se existe um domain com o nome dado
+         */
+        private boolean domainExist(String domainName) {
+            for(Domain domain: domains) {
+                if (domain.getName().equals(domainName)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Verifica se existe um ficheiro com o caminho dado
+         * 
+         * @param path
+         * @return true se existe um ficheiro com o caminho dado
+         */
+        private boolean dataExist(String path) {
+            return new File(path).isFile();
         }
     }
 }

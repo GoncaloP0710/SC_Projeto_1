@@ -4,29 +4,29 @@ import java.util.HashMap;
 public class Domain {
 
     private String domainName;
-    private String Owner;
+    private String owner;
     private ArrayList<String> userList = new ArrayList<>();
     private HashMap<String, ArrayList<Integer>> devicesList = new HashMap<>();
     
     /**
      * Cria instancia de objeto do tipo Domain
      * 
-     * @param Owner
+     * @param owner
      * @param domainName
      */
-    public Domain(String Owner, String domainName) {
-        this.Owner = Owner;
+    public Domain(String owner, String domainName) {
+        this.owner = owner;
         this.domainName = domainName;
     }
 
     /**
-     * Retorna true se o Owner tem o Id passado
+     * Retorna true se o owner tem o Id passado
      * 
      * @param userId
-     * @return true se o Owner tem o Id passado
+     * @return true se o owner tem o Id passado
      */
-    protected boolean isOwner(String userId) {
-        return userId.equals(Owner);
+    protected boolean isowner(String userId) {
+        return userId.equals(owner);
     }
 
     protected boolean belongsTo(String userId) {
@@ -49,6 +49,19 @@ public class Domain {
                 devicesList.put(user, devices);
             }
         }
+    }
+
+    protected void setOwner(String owner) {
+        this.owner = owner;
+    }
+
+    protected boolean hasPermissionToRead(String userId, Integer deviceId) {
+        if (devicesList.get(userId).equals(null)) {
+            return  false;
+        } else if (!devicesList.get(userId).contains(deviceId)) {
+            return false;
+        }
+        return true;
     }
 
 }
