@@ -106,9 +106,83 @@ public class IoTServer{
                 ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
                 ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 
-                // TODO: Comportamento do servidor com o user
-                
-            } catch (IOException e) {
+                // autenticar o utilizador
+                String[] userInfo = getUserInfo(inStream);
+                while (autentifyUserInfo(userInfo[0], userInfo[1]).equals("WRONG-PWD")) {
+                    outStream.writeObject("WRONG-PWD");
+                    userInfo = getUserInfo(inStream);
+                }
+                outStream.writeObject(autentifyUserInfo(userInfo[0], userInfo[1]));
+                addNewUser(userInfo[0], userInfo[1]);
+
+                // obter <device-id>
+                Integer deviceId = getDeviceId(inStream, userInfo[0]);
+                while (deviceId.equals(null)) {
+                    outStream.writeObject("NOK-DEVID");
+                    deviceId = getDeviceId(inStream, userInfo[0]);
+                }
+                addNewDevice(userInfo[0], deviceId);
+                outStream.writeObject("OK-DEVID");
+
+                // Verificar integridade dos dados
+                if (!verifyEXEC(inStream)) {
+                    outStream.writeObject("NOK-TESTED");
+                    stop(); // TODO: Ver depois
+                }
+                outStream.writeObject("OK-TESTED");
+
+                // TODO: LOOP
+                String comand = (String)inStream.readObject();
+                String domainName;
+                String result;
+                String userIdToBeAdded;
+                String userImg;
+
+                switch (comand) {
+                    case "CREATE":
+                        domainName = (String)inStream.readObject();
+                        result = newDomain(domainName, userInfo[0], deviceId);
+                        outStream.writeObject(result);
+                        break;
+
+                    case "ADD":
+                        userIdToBeAdded = (String)inStream.readObject();
+                        domainName = (String)inStream.readObject();
+                        result = addUserToDomain(userIdToBeAdded, userInfo[0], domainName);
+                        outStream.writeObject(result);
+                        break;
+            
+                    case "RD":
+                        domainName = (String)inStream.readObject();
+                        result = addDeviceToDomain(userInfo[0], deviceId, domainName);
+                        outStream.writeObject(result);
+                        break;
+
+                    case "ET":
+                        result = getTemperature(inStream);
+                        outStream.writeObject(result);
+                        break;
+
+                    case "EI":
+                        result = getImage(inStream, userInfo[0], deviceId);
+                        outStream.writeObject(result);
+                        break;
+
+                    case "RT":
+                        domainName = (String)inStream.readObject();
+                        sendDomainTemp(domainName, outStream, userInfo[0], deviceId);
+                        break;
+
+                    case "RI":
+                        userImg = (String)inStream.readObject();
+                        sendImage(outStream, userImg, deviceId, userInfo[0]);
+                        break;
+
+                    default:
+                        System.out.println("no match");
+                    }
+
+            } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             }
         
@@ -150,25 +224,24 @@ public class IoTServer{
         }
 
         /**
-         * Recebe <device-id> do user e faz as verificaçoes necessarias
+         * Recebe <device-id> do user retorna null se ja existir um igual
          * 
          * @param inStream Stream para receber dados
          * @param userId userId do user
          * @throws ClassNotFoundException
          * @throws IOException
          */
-        private String getDeviceId(ObjectInputStream inStream, String userId) throws ClassNotFoundException, IOException {
-            String result = "OK-DEVID";
+        private Integer getDeviceId(ObjectInputStream inStream, String userId) throws ClassNotFoundException, IOException {
             int deviceId = (int)inStream.readObject();
 
             // Verifica se existe outro IoTDevice aberto  e  autenticado  com  o  mesmo  par  (<user-id>,<dev-id>)
             if (!mapDevices.get(userId).equals(null)) {
                 if (mapDevices.get(userId).contains(deviceId)) {
-                    result = "NOK-DEVID";
+                    return null;
                 }
             }
 
-            return result;
+            return deviceId;
         }
 
         /**
@@ -185,6 +258,36 @@ public class IoTServer{
             mapUsers.put(userId, senha);
         }
 
+        /**
+         * Adiciona deviceId a lista do mapDevices correspondente ao user
+         * 
+         * @param userId userId do dispositivo em causa
+         * @param deviceId deviceId a ser criado
+         * @throws IOException
+         */
+        private void addNewDevice(String userId, Integer deviceId) throws IOException {
+            ArrayList<Integer> devices = mapDevices.get(userId);
+            devices.add(deviceId);
+            mapDevices.put(userId, devices);
+        }
+
+        /**
+         * Verifica o nome e tamanho do file passados pelo user 
+         * 
+         * @param inStream Stream para receber dados
+         * @return true se dados passados estao corretos
+         * @throws IOException 
+         * @throws ClassNotFoundException 
+         */
+        private boolean verifyEXEC(ObjectInputStream inStream) throws ClassNotFoundException, IOException {
+            File file = new File("ServerFiles/IoTDevice.class");
+            String fileName = (String)inStream.readObject();
+			long fileSize = (Long)inStream.readObject();
+            if (file.getName().equals(fileName) && file.length()==(fileSize)) {
+                return true;
+            }
+            return false;
+        }
 
         /**
          * Cria domain se ainda nao existe
@@ -205,14 +308,14 @@ public class IoTServer{
             domains.add(newDomain);
             
             // Criar ficheiro .txt com log das temperaturas desse domain
+            // TODO: Ver se deve mudar para json ou algo diferente
             File domainTempsLog = new File("ServerFiles/DomainTemps/" + domainName + ".txt");
             // Mudar o ficheiro Domain.txt com a informacao necessaria
             FileWriter myWriter = new FileWriter("ServerFiles/domains.txt", true);
             
-            // ------------------------- TODO : Escrever no ficheiro
-            myWriter.write(domainName + ":" + owner + "\n");
-            // ------------------------------------------------------------------
-            
+            // TODO: Alteracoes ao ficheiro: ServerFiles/domains.txt
+            // TODO: Ver se deve mudar para json ou algo diferente
+
             myWriter.close();
             
             return "OK";
@@ -220,14 +323,14 @@ public class IoTServer{
 
         /**
          * 
-         * @param userID the user's id
+         * @param userID the user's id to be added
          * @param domainName the domain's name 
          * @return OK if user is added to domain, NOUSER if the user doesn't exist, NODM if domain doesn't exist or NOPERM sem permissoes
          * @throws NullPointerException
          */
-        private String addUserToDomain(String userId, String domainName) throws NullPointerException {
+        private String addUserToDomain(String userIdToBeAdded, String userIdToAdd, String domainName) throws NullPointerException {
             String result = "OK";
-            boolean hasUser = mapUsers.containsKey(userId);
+            boolean hasUser = mapUsers.containsKey(userIdToBeAdded);
             if(!hasUser) {
                 result = "NOUSER";
                 return result;
@@ -236,30 +339,70 @@ public class IoTServer{
             for(Domain domain: domains) {
                 if(domainName.equals(domain.getName())) {
                     hasDomain = true;
-                    // TODO: Todas as veridicacoes, ou seja, se pode ser adicionado ou nao. Fazer todas as alteracoes necessarias (incluindo a String result)
-                    domain.addUser(userId);
+                    if (!domain.isowner(userIdToAdd)) {
+                        result = "NOPERM";
+                        return result;
+                    }
+                    domain.addUser(userIdToBeAdded);
+                    // TODO: Alteracoes ao ficheiro: ServerFiles/domains.txt
+                    // TODO: Ver se deve mudar para json ou algo diferente
+                    return result;
                 }
             }
             if(!hasDomain) {
                 result = "NODM";
             }
-            
-            // TODO: Todas as veridicacoes, ou seja, se pode ser adicionado ou nao. Fazer todas as alteracoes necessarias (incluindo a String result)
             return result;
         }
 
         /**
-         * Obtem a temperatura emviada pelo user
+         * Adiciona o device ao domain passado (Se ja la estiver retorna OK)
+         * 
+         * @param userId userId do device a adicionar
+         * @param deviceId deviceId a adicionar
+         * @param domainName domain a qual o device vai ser adicionado
+         * @return
+         * @throws NullPointerException
+         */
+        private String addDeviceToDomain(String userId, Integer deviceId, String domainName) throws NullPointerException {
+            String result = "OK";
+            boolean hasDomain = false;
+            for(Domain domain: domains) {
+                if(domainName.equals(domain.getName())) {
+                    hasDomain = true;
+                    if (!domain.belongsTo(userId)) {
+                        result = "NOPERM";
+                        return result;
+                    }
+                    domain.addDevice(userId, deviceId);
+                    // TODO: Alteracoes ao ficheiro: ServerFiles/domains.txt
+                    // TODO: Ver se deve mudar para json ou algo diferente
+                    return result;
+                }
+            }
+            if(!hasDomain) {
+                result = "NODM";
+            }
+            return result;
+        }
+
+        /**
+         * Obtem a temperatura emviada pelo user e faz as necessarias alteracoes
          * 
          * @param inStream Stream para receber dados
-         * @return retorna null se ocurreu um erro
+         * @return retorna NOK se ocurreu um erro e OK se tudo correu bem
          */
-        private Float getTemperature(ObjectInputStream inStream){
+        private String getTemperature(ObjectInputStream inStream){
+            String result = "OK"; 
             try {
                 Float temperature = inStream.readFloat();
-                return temperature;
+                // TODO: Alteracoes ao ficheiro: ServerFiles/DomainTemps/(...).txt
+                // TODO: Ver se deve mudar para json ou algo diferente
+                // TODO: Confirmar quando e que o servidor nao aceita -> Se assim funciona
+                return result;
             } catch (IOException e) {
-                return null;
+                result = "NOK";
+                return result;
             }
 	    }
 
@@ -288,14 +431,18 @@ public class IoTServer{
 
             // Verifica se o user tem permissoes
             for(Domain domain: domains) {
-                if (domain.hasPermissionToRead(userId, deviceId)) {
+                if (domain.getName().equals(domainName)) {
+                    if (!domain.belongsTo(userId)) {
+                        outStream.writeObject("NOPERM");
+                        return;
+                    }
                     break;
                 }
-                outStream.writeObject("NOPERM");
-                return;
             }
 
             // Diferente de como fiz na TP -> Confirmar se esta bem
+            // TODO: Alteracoes ao ficheiro: ServerFiles/DomainTemps/(...).txt
+            // TODO: Ver se deve mudar para json ou algo diferente
             File fileToSend = new File("ServerFiles/DomainTemps/" + domainName + ".txt");
             long size = fileToSend.length();
             // ------------------------------------------------------------------------------------
@@ -315,16 +462,24 @@ public class IoTServer{
          * @param deviceId deviceId do dispositivo que envia a imagem
          * @throws IOException
          */
-        private void getImage(ObjectInputStream inStream, String userId, Integer deviceId) throws IOException {
-            // Recebe tamanho do array
-            long size = inStream.readLong();
-            
-            byte[] array = new byte[(int) size];
-            // Recebe array com a imagem
-            inStream.readFully(array);
-            
-            Path path = Paths.get("ServerFiles/ImageFiles/" + userId + Integer.toString(deviceId) + ".jpg");
-            Files.write(path, array);
+        private String getImage(ObjectInputStream inStream, String userId, Integer deviceId) {
+            String result = "OK";
+            try {
+                // Recebe tamanho do array
+                long size = inStream.readLong();
+                
+                byte[] array = new byte[(int) size];
+                // Recebe array com a imagem
+                inStream.readFully(array);
+                
+                Path path = Paths.get("ServerFiles/ImageFiles/" + userId + Integer.toString(deviceId) + ".jpg");
+                Files.write(path, array);
+                return result;
+
+            } catch (Exception e) {
+                result = "NOK";
+                return result;
+            }
         }
 
         /**
@@ -336,7 +491,7 @@ public class IoTServer{
          * @param deviceId deviceId do dispositivo a que pertence a imagem
          * @throws IOException 
          */
-        private void sendImage(ObjectOutputStream outStream, String userId, Integer deviceId) throws IOException {
+        private void sendImage(ObjectOutputStream outStream, String userId, Integer deviceId, String userIdToRecive) throws IOException {
 
             // Verifica se esse device id não existe
             if (mapDevices.get(userId).equals(null)) {
@@ -354,10 +509,15 @@ public class IoTServer{
             }
 
             // Verifica se o user tem permissoes
+            boolean permissoes = false;
             for(Domain domain: domains) {
-                if (domain.hasPermissionToRead(userId, deviceId)) {
+                if (domain.hasPermissionToRead(userId, deviceId, userIdToRecive)) {
+                    permissoes = true;
                     break;
                 }
+            }
+
+            if (!permissoes) {
                 outStream.writeObject("NOPERM");
                 return;
             }
