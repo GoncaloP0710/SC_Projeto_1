@@ -55,7 +55,10 @@ public class Domain {
         this.owner = owner;
     }
 
-    protected boolean hasPermissionToRead(String userId, Integer deviceId) {
+    protected boolean hasPermissionToRead(String userId, Integer deviceId, String userIdReader) {
+        if (!belongsTo(userIdReader)) {
+            return  false;
+        }
         if (devicesList.get(userId).equals(null)) {
             return  false;
         } else if (!devicesList.get(userId).contains(deviceId)) {
@@ -63,5 +66,4 @@ public class Domain {
         }
         return true;
     }
-
 }
