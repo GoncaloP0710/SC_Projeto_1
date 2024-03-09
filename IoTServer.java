@@ -116,10 +116,8 @@ public class IoTServer{
 
         /**
          * Obter user-id e senha do cliente para o server
-         * Assumesse que userId e senha sao validas
          * 
-         * @param outStream
-         * @param inStream
+         * @param inStream Stream para receber dados
          * @throws ClassNotFoundException
          * @throws IOException
          */
@@ -133,8 +131,8 @@ public class IoTServer{
         /**
          * Verifica os dados do user e retorna mensagem apropriada
          * 
-         * @param userId
-         * @param senha
+         * @param userId userId do user
+         * @param senha senha do user
          * @throws IOException 
          */
         private String autentifyUserInfo(String userId, String senha) throws IOException {
@@ -152,10 +150,10 @@ public class IoTServer{
         }
 
         /**
-         * Recebe <device-id> do cliente e faz as verificaçoes necessarias
+         * Recebe <device-id> do user e faz as verificaçoes necessarias
          * 
-         * @param inStream
-         * @return
+         * @param inStream Stream para receber dados
+         * @param userId userId do user
          * @throws ClassNotFoundException
          * @throws IOException
          */
@@ -174,10 +172,10 @@ public class IoTServer{
         }
 
         /**
-         * Adiciona info do user ao file users.txt e ao hashmap mapUsers
+         * Adiciona info do novo user ao file users.txt e ao hashmap mapUsers
          * 
-         * @param userId
-         * @param senha
+         * @param userId userId do dispositivo a ser criado
+         * @param senha senha do dispositivo a ser criado
          * @throws IOException
          */
         private void addNewUser(String userId, String senha) throws IOException {
@@ -191,17 +189,15 @@ public class IoTServer{
         /**
          * Cria domain se ainda nao existe
          * 
-         * @param domainName
-         * @param userId
-         * @param deviceId
+         * @param domainName mome do domain a ser criado
+         * @param userId userId do dispositivo que cria o domain
+         * @param deviceId deviceId do dispositivo que cria o domain
          * @return OK se criado ou NOK se ja existe um domain com esse nome
          * @throws IOException 
          */
         private String newDomain(String domainName, String owner, Integer deviceId) throws IOException {
-            for(Domain domain: domains) {
-                if (domain.getName().equals(domainName)) {
-                    return "NOK";
-                }
+            if (domainExist(domainName)) {
+                return "NOK"; 
             }
             
             Domain newDomain = new Domain(owner, domainName);
@@ -240,6 +236,7 @@ public class IoTServer{
             for(Domain domain: domains) {
                 if(domainName.equals(domain.getName())) {
                     hasDomain = true;
+                    // TODO: Todas as veridicacoes, ou seja, se pode ser adicionado ou nao. Fazer todas as alteracoes necessarias (incluindo a String result)
                     domain.addUser(userId);
                 }
             }
@@ -254,7 +251,7 @@ public class IoTServer{
         /**
          * Obtem a temperatura emviada pelo user
          * 
-         * @param inStream
+         * @param inStream Stream para receber dados
          * @return retorna null se ocurreu um erro
          */
         private Float getTemperature(ObjectInputStream inStream){
@@ -267,10 +264,12 @@ public class IoTServer{
 	    }
 
         /**
+         * Envia o ficheiro de temperatura para o <user_id>:<dev_id> passado se for possivel
          * 
-         * 
-         * @param domainName
-         * @param outStream
+         * @param domainName nome do domain referente ao ficheiro
+         * @param outStream Stream para enviar dados
+         * @param userId userId do dispositivo que recebe o ficheiro
+         * @param deviceId deviceId do dispositivo que recebe o ficheiro
          * @throws IOException
          */
         private void sendDomainTemp(String domainName, ObjectOutputStream outStream, String userId, Integer deviceId) throws IOException {
@@ -309,9 +308,12 @@ public class IoTServer{
         }
 
         /**
+         * Recebe imagem de um <user_id>:<dev_id>
          * 
-         * @param inStream
-         * @throws IOException 
+         * @param inStream Stream para receber dados
+         * @param userId userId do dispositivo que envia a imagem
+         * @param deviceId deviceId do dispositivo que envia a imagem
+         * @throws IOException
          */
         private void getImage(ObjectInputStream inStream, String userId, Integer deviceId) throws IOException {
             // Recebe tamanho do array
@@ -326,12 +328,12 @@ public class IoTServer{
         }
 
         /**
-         * 
+         * Envia imagem do dispositivo <user_id>:<dev_id>
          * 
          * https://www.tutorialspoint.com/How-to-convert-Image-to-Byte-Array-in-java
-         * @param outStream
-         * @param userId
-         * @param deviceId
+         * @param outStream Stream para enviar dados
+         * @param userId userId do dispositivo a que pertence a imagem
+         * @param deviceId deviceId do dispositivo a que pertence a imagem
          * @throws IOException 
          */
         private void sendImage(ObjectOutputStream outStream, String userId, Integer deviceId) throws IOException {
@@ -373,7 +375,7 @@ public class IoTServer{
         /**
          * Verifica se existe um domain com o nome dado
          * 
-         * @param domainName
+         * @param domainName nome do domain
          * @return true se existe um domain com o nome dado
          */
         private boolean domainExist(String domainName) {
@@ -388,7 +390,7 @@ public class IoTServer{
         /**
          * Verifica se existe um ficheiro com o caminho dado
          * 
-         * @param path
+         * @param path caminho para ficheiro
          * @return true se existe um ficheiro com o caminho dado
          */
         private boolean dataExist(String path) {
