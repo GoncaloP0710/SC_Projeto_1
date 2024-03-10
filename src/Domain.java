@@ -30,50 +30,76 @@ public class Domain {
         return userId.equals(owner);
     }
 
-    protected boolean belongsTo(String userId) {
+    /**
+     * 
+     * @param userId the user's name
+     * @return true if user belongs to the domain
+     */
+    protected boolean userBelongsTo(String userId) {
         return userList.contains(userId);
     }
-
+    /**
+     * 
+     * @return the domain's name 
+     */
     protected String getName() {
         return domainName;
     }
 
+    /**
+     * 
+     * @param user the user's name
+     */
     protected void addUser(String user) {
         userList.add(user);
     }
 
+    /**
+     * 
+     * @param user the user's name
+     * @param deviceId the device's number
+     */
     protected void addDevice(String user, Integer deviceId) {
-        if (!devicesList.get(user).equals(null)) {
-            if (!devicesList.get(user).contains(deviceId)) {
-                ArrayList<Integer> devices = devicesList.get(user);
+        ArrayList<Integer> devices = devicesList.get(user);
+        if (devices != null) {
+            if (!devices.contains(deviceId)) {
                 devices.add(deviceId);
                 devicesList.put(user, devices);
             }
         }
     }
 
+    /**
+     * 
+     * @param owner the owner's name
+     */
     protected void setOwner(String owner) {
         this.owner = owner;
     }
 
+    /**
+     * 
+     * @param userId the user that will read
+     * @param deviceId the device of the user that will read
+     * @param userIdReader the id of the user
+     * @return
+     * @requires  userId != null && deviceId != null && userIdReader && devicesList.get(userId) != null
+     */
     protected boolean hasPermissionToRead(String userId, Integer deviceId, String userIdReader) {
-        if (!belongsTo(userIdReader)) {
+        if (!userBelongsTo(userIdReader)) {
             return  false;
         }
-        if (devicesList.get(userId).equals(null)) {
-            return  false;
-        } else if (!devicesList.get(userId).contains(deviceId)) {
-            return false;
-        }
-        return true;
+        return deviceBelongsTo(userId, deviceId);
     }
 
+    /**
+     * 
+     * @param userId the user
+     * @param deviceId the device
+     * @return
+     * @requires userId != null && deviceId != null && devicesList.get(userId) != null
+     */
     protected boolean deviceBelongsTo(String userId, Integer deviceId) {
-        if (devicesList.get(userId).equals(null)) {
-            return  false;
-        } else if (!devicesList.get(userId).contains(deviceId)) {
-            return false;
-        }
-        return true;
+        return devicesList.get(userId).contains(deviceId);
     }
 }
