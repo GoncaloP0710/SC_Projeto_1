@@ -365,7 +365,7 @@ public class IoTServer{
             for(Domain domain: domains) {
                 if(domainName.equals(domain.getName())) {
                     hasDomain = true;
-                    if (!domain.belongsTo(userId)) {
+                    if (!domain.userBelongsTo(userId)) {
                         result = "NOPERM";
                         return result;
                     }
@@ -434,7 +434,7 @@ public class IoTServer{
             // Verifica se o user tem permissoes
             for(Domain domain: domains) {
                 if (domain.getName().equals(domainName)) {
-                    if (!domain.belongsTo(userId)) {
+                    if (!domain.userBelongsTo(userId)) {
                         outStream.writeObject("NOPERM");
                         return;
                     }
