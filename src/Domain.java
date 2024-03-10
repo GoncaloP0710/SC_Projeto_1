@@ -18,6 +18,7 @@ public class Domain {
     public Domain(String owner, String domainName) {
         this.owner = owner;
         this.domainName = domainName;
+        addUser(owner);
     }
 
     /**
