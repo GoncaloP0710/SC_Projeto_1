@@ -67,4 +67,13 @@ public class Domain {
         }
         return true;
     }
+
+    protected boolean deviceBelongsTo(String userId, Integer deviceId) {
+        if (devicesList.get(userId).equals(null)) {
+            return  false;
+        } else if (!devicesList.get(userId).contains(deviceId)) {
+            return false;
+        }
+        return true;
+    }
 }

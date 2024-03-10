@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 import javax.imageio.ImageIO;
 
@@ -17,6 +16,7 @@ public class IoTServer{
     HashMap<String, String> mapUsers = new HashMap<>();
     HashMap<String, ArrayList<Integer>> mapDevices = new HashMap<>();
     ArrayList<Domain> domains = new ArrayList<>();
+    FileManager fileManager = new FileManager();
 
     public static void main(String[] args) throws IOException {
         try {
@@ -33,41 +33,33 @@ public class IoTServer{
 
 	public void startServer (Integer socket) throws IOException{
 		ServerSocket sSoc = null;
+        mapUsers = fileManager.getUsersFromFile();
 
-        // Atualizar mapUsers com base no .txt ------------------------------------------------------------
-        BufferedReader reader = new BufferedReader(new FileReader("ServerFiles/users.txt"));
-        String line;
-        // Reading text from the file users.txt, splitting by ':', and populating the HashMap mapUsers
-        while ((line = reader.readLine()) != null) {
-            String[] parts = line.split(":");
-            if (parts.length >= 2) {
-                mapUsers.put(parts[0].trim(), parts[1].trim());
-            }
-        }
-        BufferedReader reader = new BufferedReader(new FileReader("ServerFiles/domains.txt"));
-        String line;
-        // Reading text from the file users.txt, splitting by ':', and populating the HashMap mapUsers
-        while ((line = reader.readLine()) != null) {
-            String[] parts = line.split(":");
-            String domainName = parts[0];
-            Domain domain = new Domain("",domainName);
-            for(int i = 1; i < parts.length(); i++) {
+        // ------------------------------------------------------------------------------------------------------------------
+        // BufferedReader reader = new BufferedReader(new FileReader("ServerFiles/domains.txt"));
+        // String line;
+        // // Reading text from the file users.txt, splitting by ':', and populating the HashMap mapUsers
+        // while ((line = reader.readLine()) != null) {
+        //     String[] parts = line.split(":");
+        //     String domainName = parts[0];
+        //     Domain domain = new Domain("",domainName);
+        //     for(int i = 1; i < parts.length(); i++) {
                 
-                String[] namesDev = parts[i].split("|");
-                String user = namesDev[0];
-                if(i == 1)
-                    domain.setOwner(user);
-                domain.addUser(user);
-                List<Integer> devices = new ArrayList<>();
-                for(int j = 1; j < namesDev; j++) {
-                    devices.add(Integer.parseInt(namesDev[j]));
-                    domain.addDevice(user, Integer.parseInt(namesDev[j]));
-                }
-                mapDevices.put(user,devices);
-            }
-            domains.add(domain);
-        }
-        reader.close();
+        //         String[] namesDev = parts[i].split("|");
+        //         String user = namesDev[0];
+        //         if(i == 1)
+        //             domain.setOwner(user);
+        //         domain.addUser(user);
+        //         List<Integer> devices = new ArrayList<>();
+        //         for(int j = 1; j < namesDev; j++) {
+        //             devices.add(Integer.parseInt(namesDev[j]));
+        //             domain.addDevice(user, Integer.parseInt(namesDev[j]));
+        //         }
+        //         mapDevices.put(user,devices);
+        //     }
+        //     domains.add(domain);
+        // }
+        // reader.close();
         // -------------------------------------------------------------------------------------------------
         
 		try {
@@ -132,56 +124,59 @@ public class IoTServer{
                 }
                 outStream.writeObject("OK-TESTED");
 
-                // TODO: LOOP
+                // TODO: Ctrl+C
                 String comand = (String)inStream.readObject();
                 String domainName;
                 String result;
                 String userIdToBeAdded;
                 String userImg;
 
-                switch (comand) {
-                    case "CREATE":
-                        domainName = (String)inStream.readObject();
-                        result = newDomain(domainName, userInfo[0], deviceId);
-                        outStream.writeObject(result);
-                        break;
-
-                    case "ADD":
-                        userIdToBeAdded = (String)inStream.readObject();
-                        domainName = (String)inStream.readObject();
-                        result = addUserToDomain(userIdToBeAdded, userInfo[0], domainName);
-                        outStream.writeObject(result);
-                        break;
-            
-                    case "RD":
-                        domainName = (String)inStream.readObject();
-                        result = addDeviceToDomain(userInfo[0], deviceId, domainName);
-                        outStream.writeObject(result);
-                        break;
-
-                    case "ET":
-                        result = getTemperature(inStream);
-                        outStream.writeObject(result);
-                        break;
-
-                    case "EI":
-                        result = getImage(inStream, userInfo[0], deviceId);
-                        outStream.writeObject(result);
-                        break;
-
-                    case "RT":
-                        domainName = (String)inStream.readObject();
-                        sendDomainTemp(domainName, outStream, userInfo[0], deviceId);
-                        break;
-
-                    case "RI":
-                        userImg = (String)inStream.readObject();
-                        sendImage(outStream, userImg, deviceId, userInfo[0]);
-                        break;
-
-                    default:
-                        System.out.println("no match");
-                    }
+                while (true) {
+                    switch (comand) {
+                        case "CREATE":
+                            domainName = (String)inStream.readObject();
+                            result = newDomain(domainName, userInfo[0], deviceId);
+                            outStream.writeObject(result);
+                            break;
+    
+                        case "ADD":
+                            userIdToBeAdded = (String)inStream.readObject();
+                            domainName = (String)inStream.readObject();
+                            result = addUserToDomain(userIdToBeAdded, userInfo[0], domainName);
+                            outStream.writeObject(result);
+                            break;
+                
+                        case "RD":
+                            domainName = (String)inStream.readObject();
+                            result = addDeviceToDomain(userInfo[0], deviceId, domainName);
+                            outStream.writeObject(result);
+                            break;
+    
+                        case "ET":
+                            result = getTemperature(inStream, userInfo[0], deviceId);
+                            outStream.writeObject(result);
+                            break;
+    
+                        case "EI":
+                            result = getImage(inStream, userInfo[0], deviceId);
+                            outStream.writeObject(result);
+                            break;
+    
+                        case "RT":
+                            domainName = (String)inStream.readObject();
+                            sendDomainTemp(domainName, outStream, userInfo[0], deviceId);
+                            break;
+    
+                        case "RI":
+                            userImg = (String)inStream.readObject();
+                            sendImage(outStream, userImg, deviceId, userInfo[0]);
+                            break;
+    
+                        default:
+                            System.out.println("no match");
+                        }
+                    comand = (String)inStream.readObject();
+                }
 
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
@@ -253,9 +248,7 @@ public class IoTServer{
          * @throws IOException
          */
         private void addNewUser(String userId, String senha) throws IOException {
-            FileWriter myWriter = new FileWriter("ServerFiles/users.txt", true);
-            myWriter.write(userId + ":" + senha + "\n");
-            myWriter.close();
+            fileManager.addUserToFile(userId, senha);
             mapUsers.put(userId, senha);
         }
 
@@ -310,7 +303,8 @@ public class IoTServer{
             
             // Criar ficheiro .txt com log das temperaturas desse domain
             // TODO: Ver se deve mudar para json ou algo diferente
-            File domainTempsLog = new File("ServerFiles/DomainTemps/" + domainName + ".txt");
+            fileManager.createDomainTempFile(domainName);
+
             // Mudar o ficheiro Domain.txt com a informacao necessaria
             FileWriter myWriter = new FileWriter("ServerFiles/domains.txt", true);
             
@@ -393,11 +387,18 @@ public class IoTServer{
          * @param inStream Stream para receber dados
          * @return retorna NOK se ocurreu um erro e OK se tudo correu bem
          */
-        private String getTemperature(ObjectInputStream inStream){
+        private String getTemperature(ObjectInputStream inStream, String userId, Integer deviceId){
             String result = "OK"; 
             try {
                 Float temperature = inStream.readFloat();
-                // TODO: Alteracoes ao ficheiro: ServerFiles/DomainTemps/(...).txt
+
+                // Alteracoes aos ficheiros ServerFiles/DomainTemps/(...).txt
+                for(Domain domain: domains) {
+                    if (domain.deviceBelongsTo(userId, deviceId)) {
+                        fileManager.addTempToDomainFile(domain.getName(), temperature, userId, deviceId);
+                    }
+                }
+
                 // TODO: Ver se deve mudar para json ou algo diferente
                 // TODO: Confirmar quando e que o servidor nao aceita -> Se assim funciona
                 return result;
@@ -495,6 +496,7 @@ public class IoTServer{
         private void sendImage(ObjectOutputStream outStream, String userId, Integer deviceId, String userIdToRecive) throws IOException {
 
             // Verifica se esse device id não existe
+            // TODO: Persistencia: Se o server morrer a lista dos diveces morre tb
             if (mapDevices.get(userId).equals(null)) {
                 outStream.writeObject("NOID");
                 return;
