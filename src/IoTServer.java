@@ -1,3 +1,4 @@
+package src;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.ServerSocket;
@@ -424,7 +425,7 @@ public class IoTServer{
             }
 
             // Verifica se o ficheiro existe
-            if (!dataExist("ServerFiles/DomainTemps" + domainName + ".txt")) {
+            if (!UtilsIoT.dataExist("ServerFiles/DomainTemps" + domainName + ".txt")) {
                 outStream.writeObject("NODATA");
                 return;
             }
@@ -503,7 +504,7 @@ public class IoTServer{
             }
 
             // Verifica se o ficheiro existe
-            if (!dataExist("ServerFiles/ImageFiles" + userId + Integer.toString(deviceId) + ".jpg")) {
+            if (!UtilsIoT.dataExist("ServerFiles/ImageFiles" + userId + Integer.toString(deviceId) + ".jpg")) {
                 outStream.writeObject("NODATA");
                 return;
             }
@@ -545,16 +546,6 @@ public class IoTServer{
                 }
             }
             return false;
-        }
-
-        /**
-         * Verifica se existe um ficheiro com o caminho dado
-         * 
-         * @param path caminho para ficheiro
-         * @return true se existe um ficheiro com o caminho dado
-         */
-        private boolean dataExist(String path) {
-            return new File(path).isFile();
         }
     }
 }
