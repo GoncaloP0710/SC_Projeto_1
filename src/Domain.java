@@ -53,6 +53,8 @@ public class Domain {
      */
     protected void addUser(String user) {
         userList.add(user);
+        ArrayList<Integer> dev = new ArrayList<>();
+        devicesList.put(user, dev);
     }
 
     /**
@@ -102,5 +104,14 @@ public class Domain {
      */
     protected boolean deviceBelongsTo(String userId, Integer deviceId) {
         return devicesList.get(userId).contains(deviceId);
+    }
+
+
+    protected ArrayList<String> getUserList() {
+        return userList;
+    }
+
+    protected HashMap<String, ArrayList<Integer>> getDevicesList() {
+        return devicesList;
     }
 }
