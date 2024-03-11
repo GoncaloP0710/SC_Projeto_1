@@ -18,6 +18,9 @@ public class Domain {
     public Domain(String owner, String domainName) {
         this.owner = owner;
         this.domainName = domainName;
+        this.userList.add(owner);
+        ArrayList<Integer> nArrayList = new ArrayList<>();
+        this.devicesList.put(owner, nArrayList);
     }
 
     /**
@@ -40,10 +43,12 @@ public class Domain {
 
     protected void addUser(String user) {
         userList.add(user);
+        ArrayList<Integer> nArrayList = new ArrayList<>();
+        this.devicesList.put(user, nArrayList);
     }
 
     protected void addDevice(String user, Integer deviceId) {
-        if (!devicesList.get(user).equals(null)) {
+        if (devicesList.get(user)!=(null)) {
             if (!devicesList.get(user).contains(deviceId)) {
                 ArrayList<Integer> devices = devicesList.get(user);
                 devices.add(deviceId);
