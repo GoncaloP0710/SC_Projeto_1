@@ -2,6 +2,8 @@ package src;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -56,9 +58,13 @@ public class ServerFileManager {
         return domainsList;
     }
 
-    protected static void addDomain(Domain single) {
-        
+    protected synchronized void addUserToFile(String userId, String senha) throws IOException {
+        FileWriter myWriter = new FileWriter(users, true);
+        myWriter.write(userId + "," + senha + "\n");
+        myWriter.close();
     }
+
+    
 
     public static void main(String[] args) {
         try {
