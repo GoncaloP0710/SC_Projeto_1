@@ -6,7 +6,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Scanner;
 
 public class ServerFileManager {
@@ -15,7 +14,7 @@ public class ServerFileManager {
     private static final File domains = new File("ServerFiles\\domains.csv");
 
 
-    protected static HashMap<String,String> getUsers() throws FileNotFoundException{
+    protected synchronized HashMap<String,String> getUsers() throws FileNotFoundException{
         HashMap<String,String> usersMap = new HashMap<>();
         Scanner sc = new Scanner(users);
         while(sc.hasNextLine()) {
@@ -27,7 +26,7 @@ public class ServerFileManager {
         return usersMap;
     }
 
-    protected static ArrayList<Domain> getDomains() throws FileNotFoundException{
+    protected synchronized ArrayList<Domain> getDomains() throws FileNotFoundException{
         ArrayList<Domain> domainsList = new ArrayList<Domain>();
         Scanner sc = new Scanner(domains);
         String[] values = sc.nextLine().split(",");
@@ -65,23 +64,4 @@ public class ServerFileManager {
     }
 
     
-
-    public static void main(String[] args) {
-        try {
-            ArrayList<Domain> domainList = getDomains();
-            for(Domain d: domainList) {
-                System.out.println("Domain: " + d.getName());
-                System.out.println("Users:" + d.getUserList().toString());
-                HashMap<String, ArrayList<Integer>> devices = d.getDevicesList();
-                for (Map.Entry<String,ArrayList<Integer>> dev: devices.entrySet()) {
-                   System.out.println("Devices user: " + dev.getKey() + " devs: " + dev.getValue().toString());
-
-                }
-            }
-            
-        } catch (FileNotFoundException e) {
-            System.err.println(e);
-        }
-        
-    }
 }
