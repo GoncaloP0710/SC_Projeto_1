@@ -63,9 +63,9 @@ public class Domain {
      * @param deviceId the device's number
      */
     protected void addDevice(String user, Integer deviceId) {
-        if (devicesList.get(user)!=(null)) {
-            if (!devicesList.get(user).contains(deviceId)) {
-                ArrayList<Integer> devices = devicesList.get(user);
+        ArrayList<Integer> devices = devicesList.get(user);
+        if (devices !=(null)) {
+            if (!devices.contains(deviceId)) {
                 devices.add(deviceId);
                 devicesList.put(user, devices);
             }
