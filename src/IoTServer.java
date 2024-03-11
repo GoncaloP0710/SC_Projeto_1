@@ -22,7 +22,12 @@ public class IoTServer{
         try {
             System.out.println("servidor: main");
             IoTServer server = new IoTServer();
-            server.startServer(Integer.parseInt(args[0]));
+            if (args.length!=1) {
+                server.startServer(12345);
+            } else {
+                server.startServer(Integer.parseInt(args[0]));
+            }
+            
         } catch (NumberFormatException e) {
             System.err.println("Port number is not valid");
             System.exit(-1);
@@ -35,7 +40,7 @@ public class IoTServer{
 		ServerSocket sSoc = null;
         mapUsers = fileManager.getUsersFromFile();
 
-        // ------------------------------------------------------------------------------------------------------------------
+        // ----------------------------------------- GARGAJO -------------------------------------------------
         // BufferedReader reader = new BufferedReader(new FileReader("ServerFiles/domains.txt"));
         // String line;
         // // Reading text from the file users.txt, splitting by ':', and populating the HashMap mapUsers
@@ -107,6 +112,7 @@ public class IoTServer{
                 }
                 outStream.writeObject(autentifyUserInfo(userInfo[0], userInfo[1]));
                 addNewUser(userInfo[0], userInfo[1]);
+                System.out.println("User:Password -> " + userInfo[0] + ":" + userInfo[1]);
 
                 // obter <device-id>
                 Integer deviceId = getDeviceId(inStream, userInfo[0]);
@@ -118,11 +124,11 @@ public class IoTServer{
                 outStream.writeObject("OK-DEVID");
 
                 // Verificar integridade dos dados
-                if (!verifyEXEC(inStream)) {
-                    outStream.writeObject("NOK-TESTED");
-                    stop(); // TODO: Ver depois
-                }
-                outStream.writeObject("OK-TESTED");
+                // if (!verifyEXEC(inStream)) {
+                //     outStream.writeObject("NOK-TESTED");
+                //     stop(); // TODO: Ver depois
+                // }
+                // outStream.writeObject("OK-TESTED");
 
                 // TODO: Ctrl+C
                 String comand = (String)inStream.readObject();
@@ -209,7 +215,7 @@ public class IoTServer{
             String result;
 
             // Verify whether the user already exists, is new, or has entered an incorrect password
-            if (mapUsers.get(userId).equals(null)) {
+            if (mapUsers.get(userId)==(null)) {
                 result = "OK-NEW-USER";
             } else if (mapUsers.get(userId).equals(senha)) {
                 result = "OK-USER";
@@ -229,9 +235,10 @@ public class IoTServer{
          */
         private Integer getDeviceId(ObjectInputStream inStream, String userId) throws ClassNotFoundException, IOException {
             int deviceId = (int)inStream.readObject();
+            System.out.println("deviceId recebido: " + deviceId + "\n");
 
             // Verifica se existe outro IoTDevice aberto  e  autenticado  com  o  mesmo  par  (<user-id>,<dev-id>)
-            if (!mapDevices.get(userId).equals(null)) {
+            if (mapDevices.get(userId)!=(null)) {
                 if (mapDevices.get(userId).contains(deviceId)) {
                     return null;
                 }
@@ -250,6 +257,10 @@ public class IoTServer{
         private void addNewUser(String userId, String senha) throws IOException {
             fileManager.addUserToFile(userId, senha);
             mapUsers.put(userId, senha);
+            if (mapDevices.get(userId)==null) {
+                ArrayList<Integer> newAIntegers = new ArrayList<>();
+                mapDevices.put(userId, newAIntegers);
+            }
         }
 
         /**
@@ -390,6 +401,7 @@ public class IoTServer{
         private String getTemperature(ObjectInputStream inStream, String userId, Integer deviceId){
             String result = "OK"; 
             try {
+                // TODO: Experimentar!
                 Float temperature = inStream.readFloat();
 
                 // Alteracoes aos ficheiros ServerFiles/DomainTemps/(...).txt

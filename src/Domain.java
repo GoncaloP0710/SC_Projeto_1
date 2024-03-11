@@ -53,8 +53,8 @@ public class Domain {
      */
     protected void addUser(String user) {
         userList.add(user);
-        ArrayList<Integer> dev = new ArrayList<>();
-        devicesList.put(user, dev);
+        ArrayList<Integer> nArrayList = new ArrayList<>();
+        this.devicesList.put(user, nArrayList);
     }
 
     /**
@@ -63,9 +63,9 @@ public class Domain {
      * @param deviceId the device's number
      */
     protected void addDevice(String user, Integer deviceId) {
-        ArrayList<Integer> devices = devicesList.get(user);
-        if (devices != null) {
-            if (!devices.contains(deviceId)) {
+        if (devicesList.get(user)!=(null)) {
+            if (!devicesList.get(user).contains(deviceId)) {
+                ArrayList<Integer> devices = devicesList.get(user);
                 devices.add(deviceId);
                 devicesList.put(user, devices);
             }
