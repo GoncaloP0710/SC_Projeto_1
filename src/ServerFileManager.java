@@ -14,8 +14,8 @@ public class ServerFileManager {
     private static final File users = new File("ServerFiles\\user.csv");
     private static final File domains = new File("ServerFiles\\domains.csv");
 
-    private static final File temps = new File("ServerFiles\\temps.txt");
-    private static final File photos = new File("ServerFiles\\photos.txt");
+    private static final File temps = new File("ServerFiles\\temps.csv");
+    private static final File photos = new File("ServerFiles\\photos.csv");
 
     /**
      * 
@@ -99,12 +99,12 @@ public class ServerFileManager {
      * @return
      * @throws IOException
      */
-    protected synchronized File getTemperaturesFile() throws IOException{
-        FileWriter fw = new FileWriter(temps);
-        Scanner sc = new Scanner(domains);
+    protected synchronized File getTemperaturesFile(String domainName) throws IOException{
+        FileWriter fw = new FileWriter("ServerFiles\\temps.csv");
+        Scanner sc = new Scanner(temps);
         while(sc.hasNextLine()) {
             String[] values = sc.nextLine().split(",");
-            if(!values[3].equals("-1")) {
+            if(values[0].equals(domainName)) {
                 fw.write("Domain: " + values[0] + ", Device: " + values[1] + ":" + values[2] + ", Temp: " + values[3] + "\n");
             }
         }
@@ -120,25 +120,36 @@ public class ServerFileManager {
         fw.close();
     }
 
-    protected void writeTemperature(Domain domain, String userId, Integer device, float F) throws FileNotFoundException, IOException {
-        Scanner sc = new Scanner(domains);
+    protected void writeTemperature(String domainName, String userId, Integer device, float F) throws FileNotFoundException, IOException {
+        Scanner sc = new Scanner(temps);
         List<String> lines = new ArrayList<>();
-        String newLine = domain.getName() + "," + userId + "," + device + ",";
+        String newLine = domainName + "," + userId + "," + device + ",";
+        boolean foundLine = false;
         while (sc.hasNextLine()) {
             String line = sc.nextLine();
-            if(line.matches(newLine + ".*"))
+            if(line.matches(newLine + ".*")) {
                 line = newLine.concat(String.valueOf(F));
+                foundLine = true;
+            }
             lines.add(line);
         }
-        FileWriter fw = new FileWriter(domains);
-        int length = lines.size();
-        for(String line: lines) {
-            if (length != 1) 
-                fw.write(line + "\n", 0, line.length() + 1);
-            else
-                fw.write(line, 0, line.length());
-            length--;
+        FileWriter fw;
+        if(foundLine) {
+            fw = new FileWriter(temps, true);
+            fw.write(newLine + "," + String.valueOf(F));
         }
+        else {
+            fw = new FileWriter(temps);
+            int length = lines.size();
+            for(String line: lines) {
+                if (length != 1) 
+                    fw.write(line + "\n", 0, line.length() + 1);
+                else
+                    fw.write(line, 0, line.length());
+                length--;
+            }
+        }
+        
         fw.close();
         sc.close();
     }

@@ -1,8 +1,8 @@
-domain1,alan,1,9.0
-domain1,luis,1,-1
-domain1,luis,2,-1
-domain1,jose,-1,-1
-domain2,luis,2,-1
-domain2,luis,5,-1
-domain2,alan,-1,-1
-domain1,miguel,1,42.0
+domain1,alan,1
+domain1,luis,1
+domain1,luis,2
+domain1,jose,-1
+domain2,luis,2
+domain2,luis,5
+domain2,alan,-1
+domain1,miguel,1
