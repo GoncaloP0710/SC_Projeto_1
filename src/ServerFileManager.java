@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class ServerFileManager {
@@ -44,7 +45,6 @@ public class ServerFileManager {
         ArrayList<Domain> domainsList = new ArrayList<Domain>();
         Scanner sc = new Scanner(domains);
         String[] values = sc.nextLine().split(",");
-        
         Domain single = new Domain(values[1], values[0]);
         domainsList.add(single);
         if(Integer.parseInt(values[2]) != -1)
@@ -99,12 +99,17 @@ public class ServerFileManager {
      * @return
      * @throws IOException
      */
-    protected synchronized File getTemperaturesFile(String domainName) throws IOException{
-        FileWriter fw = new FileWriter("ServerFiles\\temps.csv");
+    protected synchronized File getTemperaturesFile(String domainName, String userID, ArrayList<Integer> deviceList) throws IOException{
+        FileWriter fw = new FileWriter("ServerFiles\\temps.txt");
         Scanner sc = new Scanner(temps);
+        String line;
+        String[] values;
         while(sc.hasNextLine()) {
-            String[] values = sc.nextLine().split(",");
-            if(values[0].equals(domainName)) {
+            line = sc.nextLine();
+            if(line.isBlank())
+                continue;
+            values = line.split(",");
+            if(values[0].equals(domainName) || values[1].equals(userID) && deviceList.contains(Integer.parseInt(values[2]))) {
                 fw.write("Domain: " + values[0] + ", Device: " + values[1] + ":" + values[2] + ", Temp: " + values[3] + "\n");
             }
         }
@@ -159,6 +164,8 @@ public class ServerFileManager {
         String result = userId + "," + device + ",";
         while (sc.hasNextLine()) {
             String line = sc.nextLine();
+            if(line.isBlank())
+                continue;
             if(line.matches(result)) {
                 sc.close();
                 return line.substring(result.length());
