@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 
 public class ServerFileManager {
@@ -40,7 +39,7 @@ public class ServerFileManager {
      * @return
      * @throws FileNotFoundException
      */
-    protected static synchronized ArrayList<Domain> getDomains() throws FileNotFoundException{
+    protected synchronized ArrayList<Domain> getDomains() throws FileNotFoundException{
         ArrayList<Domain> domainsList = new ArrayList<Domain>();
         Scanner sc = new Scanner(domains);
         String[] values = sc.nextLine().split(",");
@@ -87,7 +86,7 @@ public class ServerFileManager {
      * @param senha
      * @throws IOException
      */
-    protected static synchronized void addUserToFile(String userId, String senha) throws IOException {
+    protected synchronized void addUserToFile(String userId, String senha) throws IOException {
         FileWriter myWriter = new FileWriter(users, true);
         myWriter.write(userId + "," + senha + "\n");
         myWriter.close();
@@ -99,7 +98,7 @@ public class ServerFileManager {
      * @return
      * @throws IOException
      */
-    protected static synchronized File getTemperaturesFile() throws IOException{
+    protected synchronized File getTemperaturesFile() throws IOException{
         FileWriter fw = new FileWriter(temps);
         Scanner sc = new Scanner(domains);
         while(sc.hasNextLine()) {
@@ -114,13 +113,13 @@ public class ServerFileManager {
         return temps;
     }
 
-    protected static void writeToDomainsFile(String domain, String userId, Integer device) throws IOException {
+    protected void writeToDomainsFile(String domain, String userId, Integer device) throws IOException {
         FileWriter fw = new FileWriter(domains, true);
         fw.write("\n" + domain + "," + userId + "," + device + ",-1");
         fw.close();
     }
 
-    protected static void writeTemperature(Domain domain, String userId, Integer device, float F) throws FileNotFoundException, IOException {
+    protected void writeTemperature(Domain domain, String userId, Integer device, float F) throws FileNotFoundException, IOException {
         Scanner sc = new Scanner(domains);
         List<String> lines = new ArrayList<>();
         String newLine = domain.getName() + "," + userId + "," + device + ",";
@@ -143,32 +142,8 @@ public class ServerFileManager {
         sc.close();
     }
 
-    public static void main(String[] args) {
-        try {
-            HashMap<String, String> usersList = getUsers();
-            ArrayList<Domain> domainsList = getDomains();
-            
-            
-            for (Map.Entry<String,String> entry: usersList.entrySet()) {
-                System.out.println("username: " + entry.getKey() + ":" + entry.getValue());
-            }
-            for (Domain d: domainsList) {
-                System.out.println("Domain: " + d.getName());
-                System.out.println("Users: " + d.getUserList().toString());
-                System.out.println("Devices: " + d.getDevicesList().toString());
-            }
-            String user = domainsList.get(0).getUserList().get(0);
-            writeTemperature(domainsList.get(0), user, domainsList.get(0).getDevicesList().get(user).get(0), 9.0f);
-            writeToDomainsFile(domainsList.get(0).getName(), "miguel", 1);
-            writeTemperature(domainsList.get(0), "miguel", 1, 42.0f);
-            getTemperaturesFile();
-        } catch (Exception e) {
-            System.err.println(e);
-        }
 
 
 
-        
-    }
     
 }
