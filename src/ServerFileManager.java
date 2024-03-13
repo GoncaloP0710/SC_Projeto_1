@@ -6,6 +6,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class ServerFileManager {
@@ -13,8 +15,15 @@ public class ServerFileManager {
     private static final File users = new File("ServerFiles\\user.csv");
     private static final File domains = new File("ServerFiles\\domains.csv");
 
+    private static final File temps = new File("ServerFiles\\temps.txt");
 
-    protected synchronized HashMap<String,String> getUsers() throws FileNotFoundException{
+    /**
+     * 
+     * 
+     * @return
+     * @throws FileNotFoundException
+     */
+    protected static synchronized HashMap<String,String> getUsers() throws FileNotFoundException{
         HashMap<String,String> usersMap = new HashMap<>();
         Scanner sc = new Scanner(users);
         while(sc.hasNextLine()) {
@@ -26,7 +35,12 @@ public class ServerFileManager {
         return usersMap;
     }
 
-    protected synchronized ArrayList<Domain> getDomains() throws FileNotFoundException{
+    /**
+     * 
+     * @return
+     * @throws FileNotFoundException
+     */
+    protected static synchronized ArrayList<Domain> getDomains() throws FileNotFoundException{
         ArrayList<Domain> domainsList = new ArrayList<Domain>();
         Scanner sc = new Scanner(domains);
         String[] values = sc.nextLine().split(",");
@@ -37,14 +51,23 @@ public class ServerFileManager {
                 single.addDevice(values[1], Integer.parseInt(values[2]));
         String[] current = values.clone();
         current[2] = "0";
+        boolean hasDomain = false;
         while(sc.hasNextLine()) {
             values = sc.nextLine().split(",");
-            if(!values[0].equals(current[0])) {
+            for(Domain d: domainsList) {
+                if(d.getName().equals(values[0])) {
+                    hasDomain = true;
+                    single = d;
+                    break;
+                }
+
+            }
+            if(!hasDomain) {
                 single = new Domain(values[1], values[0]);
                 domainsList.add(single);
 
             }             
-            else if (!values[1].equals(current[1]))  {
+            else if (!single.userBelongsTo(values[1]))  {
                 single.addUser(values[1]);
             }
             
@@ -52,30 +75,100 @@ public class ServerFileManager {
                 single.addDevice(values[1], Integer.parseInt(values[2]));
             
             current = values.clone();
+            hasDomain = false;
         }
         sc.close();
         return domainsList;
     }
 
-    protected synchronized void addUserToFile(String userId, String senha) throws IOException {
+    /**
+     * 
+     * @param userId
+     * @param senha
+     * @throws IOException
+     */
+    protected static synchronized void addUserToFile(String userId, String senha) throws IOException {
         FileWriter myWriter = new FileWriter(users, true);
         myWriter.write(userId + "," + senha + "\n");
         myWriter.close();
     }
 
-    protected synchronized File getTempsFile() throws IOException{
-        File f = new File("ServerFiles\\temps.txt");
-        FileWriter fw = new FileWriter(f);
+
+    /**
+     * 
+     * @return
+     * @throws IOException
+     */
+    protected static synchronized File getTemperaturesFile() throws IOException{
+        FileWriter fw = new FileWriter(temps);
         Scanner sc = new Scanner(domains);
         while(sc.hasNextLine()) {
             String[] values = sc.nextLine().split(",");
             if(!values[3].equals("-1")) {
-                fw.write("Domain: " + values[0] + ", Device: " + values[1] + ":" + values[2] + " Temp: " + values[3] + "\n");
+                fw.write("Domain: " + values[0] + ", Device: " + values[1] + ":" + values[2] + ", Temp: " + values[3] + "\n");
             }
         }
         fw.close();
         sc.close();
-        return f;
+
+        return temps;
+    }
+
+    protected static void writeToDomainsFile(String domain, String userId, Integer device) throws IOException {
+        FileWriter fw = new FileWriter(domains, true);
+        fw.write("\n" + domain + "," + userId + "," + device + ",-1");
+        fw.close();
+    }
+
+    protected static void writeTemperature(Domain domain, String userId, Integer device, float F) throws FileNotFoundException, IOException {
+        Scanner sc = new Scanner(domains);
+        List<String> lines = new ArrayList<>();
+        String newLine = domain.getName() + "," + userId + "," + device + ",";
+        while (sc.hasNextLine()) {
+            String line = sc.nextLine();
+            if(line.matches(newLine + ".*"))
+                line = newLine.concat(String.valueOf(F));
+            lines.add(line);
+        }
+        FileWriter fw = new FileWriter(domains);
+        int length = lines.size();
+        for(String line: lines) {
+            if (length != 1) 
+                fw.write(line + "\n", 0, line.length() + 1);
+            else
+                fw.write(line, 0, line.length());
+            length--;
+        }
+        fw.close();
+        sc.close();
+    }
+
+    public static void main(String[] args) {
+        try {
+            HashMap<String, String> usersList = getUsers();
+            ArrayList<Domain> domainsList = getDomains();
+            
+            
+            for (Map.Entry<String,String> entry: usersList.entrySet()) {
+                System.out.println("username: " + entry.getKey() + ":" + entry.getValue());
+            }
+            for (Domain d: domainsList) {
+                System.out.println("Domain: " + d.getName());
+                System.out.println("Users: " + d.getUserList().toString());
+                System.out.println("Devices: " + d.getDevicesList().toString());
+            }
+            String user = domainsList.get(0).getUserList().get(0);
+            writeTemperature(domainsList.get(0), user, domainsList.get(0).getDevicesList().get(user).get(0), 9.0f);
+            writeToDomainsFile(domainsList.get(0).getName(), "miguel", 1);
+            writeTemperature(domainsList.get(0), "miguel", 1, 42.0f);
+            getTemperaturesFile();
+        } catch (Exception e) {
+            System.err.println(e);
+        }
+
+
+
+        
     }
     
 }
