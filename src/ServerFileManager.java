@@ -63,5 +63,19 @@ public class ServerFileManager {
         myWriter.close();
     }
 
+    protected synchronized File getTempsFile() throws IOException{
+        File f = new File("ServerFiles\\temps.txt");
+        FileWriter fw = new FileWriter(f);
+        Scanner sc = new Scanner(domains);
+        while(sc.hasNextLine()) {
+            String[] values = sc.nextLine().split(",");
+            if(!values[3].equals("-1")) {
+                fw.write("Domain: " + values[0] + ", Device: " + values[1] + ":" + values[2] + " Temp: " + values[3] + "\n");
+            }
+        }
+        fw.close();
+        sc.close();
+        return f;
+    }
     
 }
