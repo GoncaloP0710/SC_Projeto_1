@@ -15,6 +15,7 @@ public class ServerFileManager {
     private static final File domains = new File("ServerFiles\\domains.csv");
 
     private static final File temps = new File("ServerFiles\\temps.txt");
+    private static final File photos = new File("ServerFiles\\photos.txt");
 
     /**
      * 
@@ -142,6 +143,25 @@ public class ServerFileManager {
         sc.close();
     }
 
+    protected String getImageFilename(String userId, Integer device)  throws FileNotFoundException{
+        Scanner sc = new Scanner(photos);
+        String result = userId + "," + device + ",";
+        while (sc.hasNextLine()) {
+            String line = sc.nextLine();
+            if(line.matches(result)) {
+                sc.close();
+                return line.substring(result.length());
+            }
+        }
+        sc.close();
+        return "NODATA";
+    }
+
+    protected void writeImageFilename(String userId, Integer device, String filename) throws IOException {
+        FileWriter fw = new FileWriter(photos,true);
+        fw.write(userId + "," + device + "," + filename);
+        fw.close();
+    } 
 
 
 
