@@ -129,13 +129,42 @@ public class ServerFileManager {
 
     protected void writeToDomainsFile(String domain, String userId, Integer device) throws IOException {
         FileWriter fw = new FileWriter(domains, true);
-        fw.write("\n" + domain + "," + userId + "," + device);
+        Scanner sc = new Scanner(domain);
+        String line;
+        List<String> lines = new ArrayList<>();
+        while(sc.hasNextLine()) {
+            line = sc.nextLine();
+            if(line.matches(domain + "," + userId + ",.*"))
+                if(sc.hasNextLine())
+                    line = domain + "," + userId + "," + device + "\n";
+                else
+                    line = domain + "," + userId + "," + device;
+                
+            lines.add(line);
+        }
+        for(String s: lines)
+            fw.write(s);
+        sc.close();
         fw.close();
     }
 
     protected void writeToDomainsFile(String domain, String userId) throws IOException {
         FileWriter fw = new FileWriter(domains, true);
-        fw.write("\n" + domain + "," + userId + "," + "-1");
+        Scanner sc = new Scanner(domain);
+        String line;
+        List<String> lines = new ArrayList<>();
+        boolean hasLine = false;
+        while(sc.hasNextLine()) {
+            line = sc.nextLine();
+            if(line.matches(domain + "," + userId + ",.*"))
+                hasLine = true;
+
+                
+            lines.add(line);
+        }
+        if(!hasLine)
+            fw.write("\n" + domain + "," + userId + ",-1");
+        sc.close();
         fw.close();
     }
 
