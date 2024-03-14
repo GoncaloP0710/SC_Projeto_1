@@ -117,7 +117,7 @@ public class ServerFileManager {
             if(line.isBlank())
                 continue;
             values = line.split(",");
-            if(values[0].equals(domainName) || values[1].equals(userID) && deviceList.contains(Integer.parseInt(values[2]))) {
+            if(values[0].equals(domainName)) {
                 fw.write("Domain: " + values[0] + ", Device: " + values[1] + ":" + values[2] + ", Temp: " + values[3] + "\n");
             }
         }
