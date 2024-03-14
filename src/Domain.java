@@ -19,6 +19,7 @@ public class Domain {
         this.owner = owner;
         this.domainName = domainName;
         addUser(owner);
+        System.out.println("Domain criado -> domain name: " + domainName + " | owner: " + owner);
     }
 
     /**
@@ -55,6 +56,7 @@ public class Domain {
         userList.add(user);
         ArrayList<Integer> nArrayList = new ArrayList<>();
         this.devicesList.put(user, nArrayList);
+        System.out.println("User " + user + " adicionado ao domain " + domainName);
     }
 
     /**
@@ -68,6 +70,7 @@ public class Domain {
             if (!devices.contains(deviceId)) {
                 devices.add(deviceId);
                 devicesList.put(user, devices);
+                System.out.println("Device " + user + ":" + Integer. toString(deviceId) + " adicionado ao domain " + domainName);
             }
         }
     }

@@ -1,9 +1,13 @@
 package src;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Scanner;
 
 public class IoTDevice {
@@ -45,7 +49,7 @@ public class IoTDevice {
             String response_info = sendInfo(user_id, senha, inStream, outStream);
 
             //2
-            while(response_info == "WRONG-PWD"){
+            while(response_info.equals("WRONG-PWD") ){
                 senha = pedeSenha();
                 response_info = sendInfo(user_id, senha, inStream, outStream);
             }
@@ -53,7 +57,7 @@ public class IoTDevice {
             //3
             String response_dev = send_device_id(dev_id, inStream, outStream);
             
-            while(response_dev == "NOK-DEVID"){
+            while(response_dev.equals("NOK-DEVID") ){
                 System.out.println("Esse device esta a ser utilizado por outro cliente \n");
                 System.out.println("Escolha outro device: \n");
                 dev_id = Integer.parseInt(getAnswer());
@@ -83,9 +87,15 @@ public class IoTDevice {
                 String[] comands = getComand();
                 if(comands != null){
                     // enviar o pedido ao server
-                    for(int i = 0; i< comands.length; i++){
-                        outStream.writeObject(comands[i]);
+                    if(comands[0].equals("EI")){
+                        outStream.writeObject(comands[0]);
+                        sendImg(outStream, comands[1]);
+                    } else{
+                        for(int i = 0; i< comands.length; i++){
+                            outStream.writeObject(comands[i]);
+                        }
                     }
+                    
 
                     String resposta_server = recebe(inStream);
                     System.out.println(resposta_server);
@@ -212,7 +222,7 @@ public class IoTDevice {
 
     private static void answerMidleware(String comando){
         if(comando == "RI"){
-
+            
         } else if (comando == "RT") {
             
         } else {
@@ -228,6 +238,16 @@ public class IoTDevice {
         } catch (ClassNotFoundException | IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void sendImg(ObjectOutputStream outStream, String fileName) throws IOException {
+        // Read image file into byte array
+        byte[] imageData = Files.readAllBytes(Paths.get("UserFiles/" + fileName));
+
+        // Send image to server
+        outStream.writeObject(imageData);
+        outStream.flush();
+        System.out.println("Image sent to server.");
     }
 
     private static void getImgAnswer() {

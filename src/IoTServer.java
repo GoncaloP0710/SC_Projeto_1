@@ -8,6 +8,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 
@@ -106,12 +112,20 @@ public class IoTServer{
 
                 // autenticar o utilizador
                 String[] userInfo = getUserInfo(inStream);
+
+                System.out.println("UserId: " + userInfo[0]);
+                System.out.println("UserPass: " + userInfo[1]);
                 while (autentifyUserInfo(userInfo[0], userInfo[1]).equals("WRONG-PWD")) {
                     outStream.writeObject("WRONG-PWD");
                     userInfo = getUserInfo(inStream);
+                    System.out.println("UserId: " + userInfo[0]);
+                    System.out.println("UserPass: " + userInfo[1]);
                 }
+
                 outStream.writeObject(autentifyUserInfo(userInfo[0], userInfo[1]));
-                addNewUser(userInfo[0], userInfo[1]);
+                if (autentifyUserInfo(userInfo[0], userInfo[1]) == "OK-NEW-USER") {
+                    addNewUser(userInfo[0], userInfo[1]);
+                }
                 System.out.println("User:Password -> " + userInfo[0] + ":" + userInfo[1]);
 
                 // obter <device-id>
@@ -164,6 +178,7 @@ public class IoTServer{
                             break;
     
                         case "EI":
+                            System.out.print("EI: Servidor deve receber imagem \n");
                             result = getImage(inStream, userInfo[0], deviceId);
                             outStream.writeObject(result);
                             break;
@@ -257,9 +272,11 @@ public class IoTServer{
         private void addNewUser(String userId, String senha) throws IOException {
             fileManager.addUserToFile(userId, senha);
             mapUsers.put(userId, senha);
+            System.out.println("Adicionar user: " + userId);
             if (mapDevices.get(userId)==null) {
                 ArrayList<Integer> newAIntegers = new ArrayList<>();
                 mapDevices.put(userId, newAIntegers);
+                System.out.println("entrou if");
             }
         }
 
@@ -401,21 +418,24 @@ public class IoTServer{
         private String getTemperature(ObjectInputStream inStream, String userId, Integer deviceId){
             String result = "OK"; 
             try {
-                // TODO: Experimentar!
-                Float temperature = inStream.readFloat();
+                String temperatureString = (String) inStream.readObject();
+                float temperature = Float.parseFloat(temperatureString);
+
+                System.out.println("Temperature recived from user: " + userId + " was: " + temperatureString + "\n");
+
+                // TODO: Mudificar ficheiros
 
                 // Alteracoes aos ficheiros ServerFiles/DomainTemps/(...).txt
-                for(Domain domain: domains) {
-                    if (domain.deviceBelongsTo(userId, deviceId)) {
-                        fileManager.addTempToDomainFile(domain.getName(), temperature, userId, deviceId);
-                    }
-                }
+                // for(Domain domain: domains) {
+                //     if (domain.deviceBelongsTo(userId, deviceId)) {
+                //         fileManager.addTempToDomainFile(domain.getName(), temperature, userId, deviceId);
+                //     }
+                // }
 
-                // TODO: Ver se deve mudar para json ou algo diferente
-                // TODO: Confirmar quando e que o servidor nao aceita -> Se assim funciona
                 return result;
-            } catch (IOException e) {
+            } catch (IOException | NumberFormatException | ClassNotFoundException e) {
                 result = "NOK";
+                System.out.println("Temperature format not aproved\n");
                 return result;
             }
 	    }
@@ -479,15 +499,15 @@ public class IoTServer{
         private String getImage(ObjectInputStream inStream, String userId, Integer deviceId) {
             String result = "OK";
             try {
-                // Recebe tamanho do array
-                long size = inStream.readLong();
-                
-                byte[] array = new byte[(int) size];
-                // Recebe array com a imagem
-                inStream.readFully(array);
-                
-                Path path = Paths.get("ServerFiles/ImageFiles/" + userId + Integer.toString(deviceId) + ".jpg");
-                Files.write(path, array);
+                // Receive image from client
+                byte[] imageData = (byte[]) inStream.readObject();
+
+                // Save received image to a file
+                FileOutputStream fileOutputStream = new FileOutputStream("ServerFiles/ImageFiles/" + userId + Integer.toString(deviceId) + ".jpg");
+                fileOutputStream.write(imageData);
+                fileOutputStream.close();
+                System.out.println("Image received and saved.");
+
                 return result;
 
             } catch (Exception e) {
