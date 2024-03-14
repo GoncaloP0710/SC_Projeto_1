@@ -4,15 +4,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 
 import javax.imageio.ImageIO;
@@ -22,7 +14,6 @@ public class IoTServer{
     HashMap<String, String> mapUsers = new HashMap<>();
     HashMap<String, ArrayList<Integer>> mapDevices = new HashMap<>();
     ArrayList<Domain> domains = new ArrayList<>();
-    FileManager fileManager = new FileManager();
 
     public static void main(String[] args) throws IOException {
         try {
@@ -44,35 +35,11 @@ public class IoTServer{
 
 	public void startServer (Integer socket) throws IOException{
 		ServerSocket sSoc = null;
-        mapUsers = fileManager.getUsersFromFile();
-
-        // ----------------------------------------- GARGAJO -------------------------------------------------
-        // BufferedReader reader = new BufferedReader(new FileReader("ServerFiles/domains.txt"));
-        // String line;
-        // // Reading text from the file users.txt, splitting by ':', and populating the HashMap mapUsers
-        // while ((line = reader.readLine()) != null) {
-        //     String[] parts = line.split(":");
-        //     String domainName = parts[0];
-        //     Domain domain = new Domain("",domainName);
-        //     for(int i = 1; i < parts.length(); i++) {
-                
-        //         String[] namesDev = parts[i].split("|");
-        //         String user = namesDev[0];
-        //         if(i == 1)
-        //             domain.setOwner(user);
-        //         domain.addUser(user);
-        //         List<Integer> devices = new ArrayList<>();
-        //         for(int j = 1; j < namesDev; j++) {
-        //             devices.add(Integer.parseInt(namesDev[j]));
-        //             domain.addDevice(user, Integer.parseInt(namesDev[j]));
-        //         }
-        //         mapDevices.put(user,devices);
-        //     }
-        //     domains.add(domain);
-        // }
-        // reader.close();
-        // -------------------------------------------------------------------------------------------------
+        mapUsers = ServerFileManager.getUsers();
+        domains = ServerFileManager.getDomains();
         
+        // TODO: atualizar mapDevices
+
 		try {
 			sSoc = new ServerSocket(socket);
 		} catch (IOException | NullPointerException e) {
@@ -134,7 +101,7 @@ public class IoTServer{
                     outStream.writeObject("NOK-DEVID");
                     deviceId = getDeviceId(inStream, userInfo[0]);
                 }
-                addNewDevice(userInfo[0], deviceId);
+                addDevice(userInfo[0], deviceId);
                 outStream.writeObject("OK-DEVID");
 
                 // Verificar integridade dos dados
@@ -270,7 +237,10 @@ public class IoTServer{
          * @throws IOException
          */
         private void addNewUser(String userId, String senha) throws IOException {
-            fileManager.addUserToFile(userId, senha);
+
+            // Adicionar user ao csv
+            ServerFileManager.addUserToFile(userId, senha);
+            
             mapUsers.put(userId, senha);
             System.out.println("Adicionar user: " + userId);
             if (mapDevices.get(userId)==null) {
@@ -287,10 +257,14 @@ public class IoTServer{
          * @param deviceId deviceId a ser criado
          * @throws IOException
          */
-        private void addNewDevice(String userId, Integer deviceId) throws IOException {
+        private void addDevice(String userId, Integer deviceId) throws IOException {
             ArrayList<Integer> devices = mapDevices.get(userId);
-            devices.add(deviceId);
-            mapDevices.put(userId, devices);
+            if (!devices.contains(deviceId)) {
+                devices.add(deviceId);
+                mapDevices.put(userId, devices);
+                ServerFileManager.addDeviceToFile(userId, deviceId);
+            }
+            
         }
 
         /**
@@ -329,17 +303,8 @@ public class IoTServer{
             newDomain.addDevice(owner, deviceId);
             domains.add(newDomain);
             
-            // Criar ficheiro .txt com log das temperaturas desse domain
-            // TODO: Ver se deve mudar para json ou algo diferente
-            fileManager.createDomainTempFile(domainName);
-
-            // Mudar o ficheiro Domain.txt com a informacao necessaria
-            FileWriter myWriter = new FileWriter("ServerFiles/domains.txt", true);
-            
-            // TODO: Alteracoes ao ficheiro: ServerFiles/domains.txt
-            // TODO: Ver se deve mudar para json ou algo diferente
-
-            myWriter.close();
+            // Adicionar domain ao csv
+            ServerFileManager.writeToDomainsFile(domainName, owner, deviceId);
             
             return "OK";
         }
@@ -350,8 +315,9 @@ public class IoTServer{
          * @param domainName the domain's name 
          * @return OK if user is added to domain, NOUSER if the user doesn't exist, NODM if domain doesn't exist or NOPERM sem permissoes
          * @throws NullPointerException
+         * @throws IOException 
          */
-        private String addUserToDomain(String userIdToBeAdded, String userIdToAdd, String domainName) throws NullPointerException {
+        private String addUserToDomain(String userIdToBeAdded, String userIdToAdd, String domainName) throws NullPointerException, IOException {
             String result = "OK";
             boolean hasUser = mapUsers.containsKey(userIdToBeAdded);
             if(!hasUser) {
@@ -367,14 +333,15 @@ public class IoTServer{
                         return result;
                     }
                     domain.addUser(userIdToBeAdded);
-                    // TODO: Alteracoes ao ficheiro: ServerFiles/domains.txt
-                    // TODO: Ver se deve mudar para json ou algo diferente
                     return result;
                 }
             }
             if(!hasDomain) {
                 result = "NODM";
             }
+
+            // TODO: Alterar linha seguinte paara adicionar so o user e nao o device
+            ServerFileManager.writeToDomainsFile(domainName, userIdToBeAdded, 0);
             return result;
         }
 
@@ -386,8 +353,9 @@ public class IoTServer{
          * @param domainName domain a qual o device vai ser adicionado
          * @return
          * @throws NullPointerException
+         * @throws IOException 
          */
-        private String addDeviceToDomain(String userId, Integer deviceId, String domainName) throws NullPointerException {
+        private String addDeviceToDomain(String userId, Integer deviceId, String domainName) throws NullPointerException, IOException {
             String result = "OK";
             boolean hasDomain = false;
             for(Domain domain: domains) {
@@ -398,14 +366,15 @@ public class IoTServer{
                         return result;
                     }
                     domain.addDevice(userId, deviceId);
-                    // TODO: Alteracoes ao ficheiro: ServerFiles/domains.txt
-                    // TODO: Ver se deve mudar para json ou algo diferente
                     return result;
                 }
             }
             if(!hasDomain) {
                 result = "NODM";
             }
+
+            // TODO: Ver se vai ficar assim
+            ServerFileManager.writeToDomainsFile(domainName, userId, deviceId);
             return result;
         }
 
@@ -423,14 +392,9 @@ public class IoTServer{
 
                 System.out.println("Temperature recived from user: " + userId + " was: " + temperatureString + "\n");
 
-                // TODO: Mudificar ficheiros
+                // TODO: Verificar
+                registerTemp(userId, deviceId, temperature);
 
-                // Alteracoes aos ficheiros ServerFiles/DomainTemps/(...).txt
-                // for(Domain domain: domains) {
-                //     if (domain.deviceBelongsTo(userId, deviceId)) {
-                //         fileManager.addTempToDomainFile(domain.getName(), temperature, userId, deviceId);
-                //     }
-                // }
 
                 return result;
             } catch (IOException | NumberFormatException | ClassNotFoundException e) {
@@ -507,6 +471,7 @@ public class IoTServer{
                 fileOutputStream.write(imageData);
                 fileOutputStream.close();
                 System.out.println("Image received and saved.");
+                ServerFileManager.writeImageFilename(userId, deviceId, userId + Integer.toString(deviceId) + ".jpg");
 
                 return result;
 
@@ -556,13 +521,16 @@ public class IoTServer{
                 outStream.writeObject("NOPERM");
                 return;
             }
-
+            String filename = ServerFileManager.getImageFilename(userId, deviceId);
             // Envia a imagem
-            BufferedImage bImage = ImageIO.read(new File("ServerFiles/ImageFiles/" + userId + Integer.toString(deviceId) + ".jpg"));
+            BufferedImage bImage = ImageIO.read(new File(filename));
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ImageIO.write(bImage, "jpg", bos );
             byte [] data = bos.toByteArray();
             
+            outStream.writeObject("OK");
+            outStream.writeObject(userId);
+            outStream.writeInt(deviceId);
             outStream.writeLong(data.length);
             outStream.write(data);
         }
@@ -580,6 +548,14 @@ public class IoTServer{
                 }
             }
             return false;
+        }
+
+        private void registerTemp(String userId, Integer deviceId, float temperature) throws FileNotFoundException, IOException {
+            for(Domain domain: domains){
+                if(domain.deviceBelongsTo(userId, deviceId)) {
+                    ServerFileManager.writeTemperature(domain.getName(), userId, deviceId, temperature);
+                }
+            }
         }
     }
 }

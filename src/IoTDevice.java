@@ -1,7 +1,6 @@
 package src;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -18,7 +17,7 @@ public class IoTDevice {
     static ObjectOutputStream outStream;
     static Scanner sc = new Scanner(System.in);
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ClassNotFoundException {
         try{
             running = true;
             setup();
@@ -95,10 +94,7 @@ public class IoTDevice {
                             outStream.writeObject(comands[i]);
                         }
                     }
-                    
-
-                    String resposta_server = recebe(inStream);
-                    System.out.println(resposta_server);
+                    answerMidleware(comands[0]);
                 } else {
                     System.out.println("invalid command! \n");
                 }
@@ -162,16 +158,6 @@ public class IoTDevice {
         return recebe(in);
     }
 
-    private static String send_file_info(long tamanho, String nome, ObjectInputStream in, ObjectOutputStream out) throws IOException{
-        out.writeObject(nome);
-        out.writeObject(tamanho);
-        return recebe(in);
-    }
-
-    private static long getFileSize(File f){
-        return f.length();
-    }
-
     private static String recebe(ObjectInputStream in) throws IOException{
         try{
             String result = (String) in.readObject();
@@ -220,9 +206,14 @@ public class IoTDevice {
             }   
     }
 
-    private static void answerMidleware(String comando){
+    private static void answerMidleware(String comando) throws ClassNotFoundException, IOException{
         if(comando == "RI"){
-            
+            String resposta = (String)inStream.readObject();
+            if (resposta==("OK")) {
+                getImgAnswer();
+            } else {
+                System.out.println(resposta);
+            }
         } else if (comando == "RT") {
             
         } else {
@@ -251,7 +242,22 @@ public class IoTDevice {
     }
 
     private static void getImgAnswer() {
-        
+        try {
+            Long imgSize = (Long) inStream.readLong();
+            String userId = (String) inStream.readObject();
+            Integer deviceId = (Integer) inStream.readInt();
+            // Receive image from client
+            byte[] imageData = (byte[]) inStream.readObject();
+
+            // Save received image to a file
+            FileOutputStream fileOutputStream = new FileOutputStream("ClientFiles/ImageFiles/" + userId + Integer.toString(deviceId) + ".jpg");
+            fileOutputStream.write(imageData);
+            fileOutputStream.close();
+            System.out.println("OK, " + Long.toString(imgSize) + " (long)");
+            ServerFileManager.writeImageFilename(userId, deviceId, userId + Integer.toString(deviceId) + ".jpg");
+        } catch (Exception e) {
+            System.out.println("Image not received due to an error.");
+        }
     }
 
     private static void getTxtAnswer() {

@@ -106,6 +106,9 @@ public class Domain {
      * @requires userId != null && deviceId != null && devicesList.get(userId) != null
      */
     protected boolean deviceBelongsTo(String userId, Integer deviceId) {
+        if (devicesList.get(userId)==null) {
+            return false;
+        }
         return devicesList.get(userId).contains(deviceId);
     }
 
