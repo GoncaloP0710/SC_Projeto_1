@@ -134,6 +134,8 @@ public class ServerFileManager {
         List<String> lines = new ArrayList<>();
         while(sc.hasNextLine()) {
             line = sc.nextLine();
+            if(line.isBlank())
+                continue;
             if(line.matches(domain + "," + userId + ",.*"))
                 if(sc.hasNextLine())
                     line = domain + "," + userId + "," + device + "\n";
@@ -159,7 +161,6 @@ public class ServerFileManager {
             if(line.matches(domain + "," + userId + ",.*"))
                 hasLine = true;
 
-                
             lines.add(line);
         }
         if(!hasLine)
@@ -220,7 +221,24 @@ public class ServerFileManager {
 
     protected void writeImageFilename(String userId, Integer device, String filename) throws IOException {
         FileWriter fw = new FileWriter(photos,true);
-        fw.write(userId + "," + device + "," + filename);
+        Scanner sc = new Scanner(photos);
+        boolean foundLine = false;
+        List<String> lines = new ArrayList<>();
+        while (sc.hasNextLine()) {
+            String line = sc.nextLine();
+            if(line.matches(userId + "," + device + ",.*")) {
+                line = userId + "," + device + "," + filename;
+                foundLine = true;
+            }
+            lines.add(line);
+        }
+        if(foundLine)
+            for(String s: lines) {
+                fw.write(s);    
+            }
+        else
+            fw.write(userId + "," + device + "," + filename);
+        
         fw.close();
     } 
 
