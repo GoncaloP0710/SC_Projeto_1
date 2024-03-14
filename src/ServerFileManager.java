@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 
 public class ServerFileManager {
@@ -44,16 +43,25 @@ public class ServerFileManager {
     protected synchronized ArrayList<Domain> getDomains() throws FileNotFoundException{
         ArrayList<Domain> domainsList = new ArrayList<Domain>();
         Scanner sc = new Scanner(domains);
-        String[] values = sc.nextLine().split(",");
-        Domain single = new Domain(values[1], values[0]);
-        domainsList.add(single);
-        if(Integer.parseInt(values[2]) != -1)
-                single.addDevice(values[1], Integer.parseInt(values[2]));
-        String[] current = values.clone();
-        current[2] = "0";
+        String line = sc.nextLine();
+        String values[] = null;
         boolean hasDomain = false;
+        String[] current = null;
+        Domain single = null;
+        if(!line.isBlank()) {
+            values = line.split(",");
+            single = new Domain(values[1], values[0]);
+            domainsList.add(single);
+            if(Integer.parseInt(values[2]) != -1)
+                    single.addDevice(values[1], Integer.parseInt(values[2]));
+            current = values.clone();
+            current[2] = "0";
+        }
         while(sc.hasNextLine()) {
-            values = sc.nextLine().split(",");
+            line = sc.nextLine();
+            if(line.isBlank())
+                continue;
+            values = line.split(",");
             for(Domain d: domainsList) {
                 if(d.getName().equals(values[0])) {
                     hasDomain = true;
@@ -121,7 +129,13 @@ public class ServerFileManager {
 
     protected void writeToDomainsFile(String domain, String userId, Integer device) throws IOException {
         FileWriter fw = new FileWriter(domains, true);
-        fw.write("\n" + domain + "," + userId + "," + device + ",-1");
+        fw.write("\n" + domain + "," + userId + "," + device);
+        fw.close();
+    }
+
+    protected void writeToDomainsFile(String domain, String userId) throws IOException {
+        FileWriter fw = new FileWriter(domains, true);
+        fw.write("\n" + domain + "," + userId + "," + "-1");
         fw.close();
     }
 
