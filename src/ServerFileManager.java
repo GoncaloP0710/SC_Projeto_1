@@ -13,6 +13,8 @@ public class ServerFileManager {
 
     private static final File users = new File("ServerFiles\\user.csv");
     private static final File domains = new File("ServerFiles\\domains.csv");
+    private static final File userDevices = new File("ServerFiles\\userdevices.csv");
+    
 
     private static final File temps = new File("ServerFiles\\temps.csv");
     private static final File photos = new File("ServerFiles\\photos.csv");
@@ -26,8 +28,12 @@ public class ServerFileManager {
     protected static synchronized HashMap<String,String> getUsers() throws FileNotFoundException{
         HashMap<String,String> usersMap = new HashMap<>();
         Scanner sc = new Scanner(users);
+        String line;
         while(sc.hasNextLine()) {
-            String[] keyValue = sc.nextLine().split(",");
+            line = sc.nextLine();
+            if(line.isEmpty())
+                continue;
+            String[] keyValue = line.split(",");
             usersMap.put(keyValue[0], keyValue[1]);
 
         }
@@ -35,31 +41,43 @@ public class ServerFileManager {
         return usersMap;
     }
 
+    protected static synchronized HashMap<String,ArrayList<Integer>> getUsersDevices() throws FileNotFoundException{
+        HashMap<String,ArrayList<Integer>> usersDevicesMap = new HashMap<>();
+        Scanner sc = new Scanner(userDevices);
+        String line;
+        while(sc.hasNextLine()) {
+            line = sc.nextLine();
+            String[] keyValue = line.split(",");
+            if(!usersDevicesMap.containsKey(keyValue[0])) {
+                ArrayList<Integer> devices = new ArrayList<>();
+                devices.add(Integer.parseInt(keyValue[1]));
+                usersDevicesMap.put(keyValue[0], devices);
+            }
+            else {
+                ArrayList<Integer> devices = usersDevicesMap.get(keyValue[0]);
+                devices.add(Integer.parseInt(keyValue[1]));
+            }
+
+        }
+        sc.close();
+        return usersDevicesMap;
+    }
+
     /**
      * 
      * @return
      * @throws FileNotFoundException
      */
-    protected synchronized ArrayList<Domain> getDomains() throws FileNotFoundException{
+    protected synchronized static ArrayList<Domain> getDomains() throws FileNotFoundException{
         ArrayList<Domain> domainsList = new ArrayList<Domain>();
         Scanner sc = new Scanner(domains);
-        String line = sc.nextLine();
+        String line;
         String values[] = null;
         boolean hasDomain = false;
-        String[] current = null;
         Domain single = null;
-        if(!line.isBlank()) {
-            values = line.split(",");
-            single = new Domain(values[1], values[0]);
-            domainsList.add(single);
-            if(Integer.parseInt(values[2]) != -1)
-                    single.addDevice(values[1], Integer.parseInt(values[2]));
-            current = values.clone();
-            current[2] = "0";
-        }
         while(sc.hasNextLine()) {
             line = sc.nextLine();
-            if(line.isBlank())
+            if(line.isEmpty())
                 continue;
             values = line.split(",");
             for(Domain d: domainsList) {
@@ -72,17 +90,18 @@ public class ServerFileManager {
             }
             if(!hasDomain) {
                 single = new Domain(values[1], values[0]);
-                domainsList.add(single);
-
             }             
             else if (!single.userBelongsTo(values[1]))  {
                 single.addUser(values[1]);
             }
-            
+
             if(Integer.parseInt(values[2]) != -1)
                 single.addDevice(values[1], Integer.parseInt(values[2]));
+
+            if(!hasDomain)
+                domainsList.add(single);
+
             
-            current = values.clone();
             hasDomain = false;
         }
         sc.close();
@@ -95,7 +114,7 @@ public class ServerFileManager {
      * @param senha
      * @throws IOException
      */
-    protected synchronized void addUserToFile(String userId, String senha) throws IOException {
+    protected synchronized static void addUserToFile(String userId, String senha) throws IOException {
         FileWriter myWriter = new FileWriter(users, true);
         myWriter.write(userId + "," + senha + "\n");
         myWriter.close();
@@ -114,7 +133,7 @@ public class ServerFileManager {
         String[] values;
         while(sc.hasNextLine()) {
             line = sc.nextLine();
-            if(line.isBlank())
+            if(line.isEmpty())
                 continue;
             values = line.split(",");
             if(values[0].equals(domainName)) {
@@ -127,25 +146,27 @@ public class ServerFileManager {
         return temps;
     }
 
-    protected void writeToDomainsFile(String domain, String userId, Integer device) throws IOException {
+    protected static void writeToDomainsFile(String domain, String userId, Integer device) throws IOException {
         FileWriter fw = new FileWriter(domains, true);
-        Scanner sc = new Scanner(domain);
+        Scanner sc = new Scanner(domains);
         String line;
         List<String> lines = new ArrayList<>();
+        boolean hasLine = false;
         while(sc.hasNextLine()) {
             line = sc.nextLine();
-            if(line.isBlank())
-                continue;
-            if(line.matches(domain + "," + userId + ",.*"))
-                if(sc.hasNextLine())
-                    line = domain + "," + userId + "," + device + "\n";
-                else
-                    line = domain + "," + userId + "," + device;
+            if(line.matches(domain + "," + userId + ",.*")) {
+                line = domain + "," + userId + "," + device;
+                hasLine = true;
+            }
+                
                 
             lines.add(line);
         }
-        for(String s: lines)
-            fw.write(s);
+        if(!hasLine)
+            fw.write(domain + "," + userId + "," + device + "\n");
+        else
+            for(String s: lines)
+                fw.write(s);
         sc.close();
         fw.close();
     }
@@ -169,7 +190,7 @@ public class ServerFileManager {
         fw.close();
     }
 
-    protected void writeTemperature(String domainName, String userId, Integer device, float F) throws FileNotFoundException, IOException {
+    protected static void writeTemperature(String domainName, String userId, Integer device, float F) throws FileNotFoundException, IOException {
         Scanner sc = new Scanner(temps);
         List<String> lines = new ArrayList<>();
         String newLine = domainName + "," + userId + "," + device + ",";
@@ -183,9 +204,9 @@ public class ServerFileManager {
             lines.add(line);
         }
         FileWriter fw;
-        if(foundLine) {
+        if(!foundLine) {
             fw = new FileWriter(temps, true);
-            fw.write(newLine + "," + String.valueOf(F));
+            fw.write(newLine + "," + String.valueOf(F) + "\n");
         }
         else {
             fw = new FileWriter(temps);
@@ -203,12 +224,12 @@ public class ServerFileManager {
         sc.close();
     }
 
-    protected String getImageFilename(String userId, Integer device)  throws FileNotFoundException{
+    protected static String getImageFilename(String userId, Integer device)  throws FileNotFoundException{
         Scanner sc = new Scanner(photos);
         String result = userId + "," + device + ",";
         while (sc.hasNextLine()) {
             String line = sc.nextLine();
-            if(line.isBlank())
+            if(line.isEmpty())
                 continue;
             if(line.matches(result)) {
                 sc.close();
@@ -219,7 +240,7 @@ public class ServerFileManager {
         return "NODATA";
     }
 
-    protected void writeImageFilename(String userId, Integer device, String filename) throws IOException {
+    protected static void writeImageFilename(String userId, Integer device, String filename) throws IOException {
         FileWriter fw = new FileWriter(photos,true);
         Scanner sc = new Scanner(photos);
         boolean foundLine = false;
@@ -242,7 +263,35 @@ public class ServerFileManager {
         fw.close();
     } 
 
+    /**
+     * 
+     * @param userId
+     * @param deviceId
+     * @throws IOException
+     */
+    protected synchronized static void addDeviceToFile(String userId, Integer deviceId) throws IOException {
+        FileWriter myWriter = new FileWriter(userDevices, true);
+        myWriter.write(userId + "," + Integer.toString(deviceId) + "\n");
+        myWriter.close();
+    }
 
+    /**
+     * 
+     * 
+     * @return
+     * @throws FileNotFoundException
+     */
+    protected static synchronized HashMap<String,Integer> getDevices() throws FileNotFoundException{
+        HashMap<String,Integer> devicesMap = new HashMap<>();
+        Scanner sc = new Scanner(userDevices);
+        while(sc.hasNextLine()) {
+            String[] keyValue = sc.nextLine().split(",");
+            devicesMap.put(keyValue[0], Integer.parseInt(keyValue[1]));
+
+        }
+        sc.close();
+        return devicesMap;
+    }
 
     
 }
