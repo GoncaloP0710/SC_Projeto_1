@@ -37,6 +37,7 @@ public class IoTServer{
 		ServerSocket sSoc = null;
         mapUsers = ServerFileManager.getUsers();
         domains = ServerFileManager.getDomains();
+        mapDevices = ServerFileManager.getUsersDevices();
         
         // TODO: atualizar mapDevices
 
@@ -80,6 +81,9 @@ public class IoTServer{
                 // autenticar o utilizador
                 String[] userInfo = getUserInfo(inStream);
 
+        
+                
+
                 System.out.println("UserId: " + userInfo[0]);
                 System.out.println("UserPass: " + userInfo[1]);
                 while (autentifyUserInfo(userInfo[0], userInfo[1]).equals("WRONG-PWD")) {
@@ -97,7 +101,7 @@ public class IoTServer{
 
                 // obter <device-id>
                 Integer deviceId = getDeviceId(inStream, userInfo[0]);
-                while (deviceId.equals(null)) {
+                while (deviceId == null) {
                     outStream.writeObject("NOK-DEVID");
                     deviceId = getDeviceId(inStream, userInfo[0]);
                 }
@@ -121,6 +125,7 @@ public class IoTServer{
                 while (true) {
                     switch (comand) {
                         case "CREATE":
+                            
                             domainName = (String)inStream.readObject();
                             result = newDomain(domainName, userInfo[0], deviceId);
                             outStream.writeObject(result);
@@ -341,7 +346,7 @@ public class IoTServer{
             }
 
             // TODO: Alterar linha seguinte paara adicionar so o user e nao o device
-            ServerFileManager.writeToDomainsFile(domainName, userIdToBeAdded, 0);
+            ServerFileManager.writeToDomainsFile(domainName, userIdToBeAdded, -1);
             return result;
         }
 
@@ -393,7 +398,7 @@ public class IoTServer{
                 System.out.println("Temperature recived from user: " + userId + " was: " + temperatureString + "\n");
 
                 // TODO: Verificar
-                registerTemp(userId, deviceId, temperature);
+                // ServerFileManager.writeTemperature(userId, deviceId, temperature);
 
 
                 return result;
@@ -550,12 +555,12 @@ public class IoTServer{
             return false;
         }
 
-        private void registerTemp(String userId, Integer deviceId, float temperature) throws FileNotFoundException, IOException {
-            for(Domain domain: domains){
-                if(domain.deviceBelongsTo(userId, deviceId)) {
-                    ServerFileManager.writeTemperature(domain.getName(), userId, deviceId, temperature);
-                }
-            }
-        }
+        // private void registerTemp(String userId, Integer deviceId, float temperature) throws FileNotFoundException, IOException {
+        //     for(Domain domain: domains){
+        //         if(domain.deviceBelongsTo(userId, deviceId)) {
+        //             ServerFileManager.writeTemperature(domain.getName(), userId, deviceId, temperature);
+        //         }
+        //     }
+        // }
     }
 }
