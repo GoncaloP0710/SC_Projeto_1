@@ -398,6 +398,7 @@ public class IoTServer{
             }
             if(!hasDomain) {
                 result = "NODM";
+                return result;
             }
 
             // TODO: Ver se vai ficar assim
