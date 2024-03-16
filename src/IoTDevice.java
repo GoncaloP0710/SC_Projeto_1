@@ -1,5 +1,4 @@
 package src;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -79,7 +78,7 @@ public class IoTDevice {
             // }
 
             //7 Imprimir menu de comandos
-            System.out.println(interfaceIO());
+            interfaceIO();
 
             //8 e 9
             while(running){
@@ -168,20 +167,19 @@ public class IoTDevice {
         return null;
     }
     
-    public static String interfaceIO() {
-        String s = "--------------------------------------------------------------------\n";
-        s.concat("Comandos: \n");
-        s.concat("\n");
-        s.concat("CREATE <dominio> - Cria um novo dominio com o nome escolhido \n");
-        s.concat("ADD <username> <dominio> - Adiciona o utilizador escolhido ao dominio escolhido \n");
-        s.concat("RD <dominio> - Regista o dispositivo atual ao dominio escolhido \n");
-        s.concat("ET <float> - Envia o valor float da temperatura \n");
-        s.concat("EI <filename.jpg> - Abre o ficheiro do cliente com o nome escolhido \n");
-        s.concat("RT <dominio> - Obtem os dados da temperatura guardados no servidor de todos os dispositivos dentro do dominio \n");
-        s.concat("RI <user_id>:<dev_id> - Permite obter a imagem do dispositivo escolhido\n");
-        s.concat("\n");
-        s.concat("--------------------------------------------------------------------\n");
-        return s;
+    public static void interfaceIO() {
+        System.out.println("--------------------------------------------------------------------\n");
+        System.out.println("Comandos: \n");
+        System.out.println("\n");
+        System.out.println("CREATE <dominio> - Cria um novo dominio com o nome escolhido \n");
+        System.out.println("ADD <username> <dominio> - Adiciona o utilizador escolhido ao dominio escolhido \n");
+        System.out.println("RD <dominio> - Regista o dispositivo atual ao dominio escolhido \n");
+        System.out.println("ET <float> - Envia o valor float da temperatura \n");
+        System.out.println("EI <filename.jpg> - Abre o ficheiro do cliente com o nome escolhido \n");
+        System.out.println("RT <dominio> - Obtem os dados da temperatura guardados no servidor de todos os dispositivos dentro do dominio \n");
+        System.out.println("RI <user_id>:<dev_id> - Permite obter a imagem do dispositivo escolhido\n");
+        System.out.println("\n");
+        System.out.println("--------------------------------------------------------------------\n");
     }
 
     private static String[] verifyCommand(String comando){
