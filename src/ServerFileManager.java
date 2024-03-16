@@ -209,7 +209,7 @@ public class ServerFileManager {
         FileWriter fw;
         if(!foundLine) {
             fw = new FileWriter(temps, true);
-            fw.write(newLine + "," + String.valueOf(F) + "\n");
+            fw.write(newLine + String.valueOf(F) + "\n");
         }
         else {
             fw = new FileWriter(temps);

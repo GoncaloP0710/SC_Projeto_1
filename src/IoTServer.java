@@ -13,6 +13,7 @@ public class IoTServer{
 
     HashMap<String, String> mapUsers = new HashMap<>();
     HashMap<String, ArrayList<Integer>> mapDevices = new HashMap<>();
+    HashMap<String, ArrayList<Integer>> mapDevicesOnline = new HashMap<>();
     ArrayList<Domain> domains = new ArrayList<>();
 
     public static void main(String[] args) throws IOException {
@@ -39,7 +40,6 @@ public class IoTServer{
         domains = ServerFileManager.getDomains();
         mapDevices = ServerFileManager.getUsersDevices();
         
-        // TODO: atualizar mapDevices
 
 		try {
 			sSoc = new ServerSocket(socket);
@@ -66,6 +66,8 @@ public class IoTServer{
 	class ServerThread extends Thread {
 
 		private Socket socket = null;
+        protected String userId;
+        protected Integer deviceId;
 
 		ServerThread(Socket inSoc) {
 			socket = inSoc;
@@ -99,6 +101,8 @@ public class IoTServer{
                 }
                 System.out.println("User:Password -> " + userInfo[0] + ":" + userInfo[1]);
 
+                this.userId = userInfo[0];
+
                 // obter <device-id>
                 Integer deviceId = getDeviceId(inStream, userInfo[0]);
                 while (deviceId == null) {
@@ -107,6 +111,8 @@ public class IoTServer{
                 }
                 addDevice(userInfo[0], deviceId);
                 outStream.writeObject("OK-DEVID");
+
+                this.deviceId = deviceId;
 
                 // Verificar integridade dos dados
                 // if (!verifyEXEC(inStream)) {
@@ -172,6 +178,11 @@ public class IoTServer{
                 }
 
             } catch (IOException | ClassNotFoundException e) {
+                System.out.println("O cliente desconectou-se");
+
+                ArrayList<Integer> devicesOnline = mapDevicesOnline.get(userId);
+                devicesOnline.remove(deviceId);
+                mapDevices.put(userId, devicesOnline);
                 e.printStackTrace();
             }
         
@@ -225,8 +236,8 @@ public class IoTServer{
             System.out.println("deviceId recebido: " + deviceId + "\n");
 
             // Verifica se existe outro IoTDevice aberto  e  autenticado  com  o  mesmo  par  (<user-id>,<dev-id>)
-            if (mapDevices.get(userId)!=(null)) {
-                if (mapDevices.get(userId).contains(deviceId)) {
+            if (mapDevicesOnline.get(userId)!=(null)) {
+                if (mapDevicesOnline.get(userId).contains(deviceId)) {
                     return null;
                 }
             }
@@ -270,6 +281,16 @@ public class IoTServer{
                 ServerFileManager.addDeviceToFile(userId, deviceId);
             }
             
+            ArrayList<Integer> devicesOnline = mapDevicesOnline.get(userId);
+            if (devicesOnline!=null) {
+                if (!devicesOnline.contains(deviceId)) {
+                    devicesOnline.add(deviceId);
+                }
+            } else {
+                ArrayList<Integer> devicesOnlineNewList = new ArrayList<>();
+                devicesOnlineNewList.add(deviceId);
+                mapDevicesOnline.put(userId, devicesOnlineNewList);
+            }
         }
 
         /**
@@ -399,7 +420,7 @@ public class IoTServer{
                 System.out.println("Temperature recived from user: " + userId + " was: " + temperatureString + "\n");
 
                 // TODO: Verificar
-                // ServerFileManager.writeTemperature(userId, deviceId, temperature);
+                ServerFileManager.writeTemperature(userId, deviceId, temperature);
 
 
                 return result;
@@ -428,7 +449,7 @@ public class IoTServer{
             }
 
             // Verifica se o ficheiro existe
-            if (!UtilsIoT.dataExist("ServerFiles/DomainTemps" + domainName + ".txt")) {
+            if (!UtilsIoT.dataExist("ServerFiles/temps.txt")) {
                 outStream.writeObject("NODATA");
                 return;
             }
@@ -500,7 +521,7 @@ public class IoTServer{
 
             // Verifica se esse device id não existe
             // TODO: Persistencia: Se o server morrer a lista dos diveces morre tb
-            if (mapDevices.get(userId).equals(null)) {
+            if (mapDevices.get(userId)==(null)) {
                 outStream.writeObject("NOID");
                 return;
             } else if (!mapDevices.get(userId).contains(deviceId)) {
