@@ -193,10 +193,10 @@ public class ServerFileManager {
         fw.close();
     }
 
-    protected static void writeTemperature(String domainName, String userId, Integer device, float F) throws FileNotFoundException, IOException {
+    protected static void writeTemperature(String userId, Integer device, float F) throws FileNotFoundException, IOException {
         Scanner sc = new Scanner(temps);
         List<String> lines = new ArrayList<>();
-        String newLine = domainName + "," + userId + "," + device + ",";
+        String newLine = userId + "," + device + ",";
         boolean foundLine = false;
         while (sc.hasNextLine()) {
             String line = sc.nextLine();
