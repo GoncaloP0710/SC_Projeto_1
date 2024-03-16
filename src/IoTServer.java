@@ -338,6 +338,7 @@ public class IoTServer{
                         return result;
                     }
                     domain.addUser(userIdToBeAdded);
+                    ServerFileManager.writeToDomainsFile(domainName, userIdToBeAdded, -1);
                     return result;
                 }
             }

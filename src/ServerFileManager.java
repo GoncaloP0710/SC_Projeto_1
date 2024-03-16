@@ -147,7 +147,7 @@ public class ServerFileManager {
     }
 
     protected static void writeToDomainsFile(String domain, String userId, Integer device) throws IOException {
-        FileWriter fw = new FileWriter(domains, true);
+        FileWriter fw ;
         Scanner sc = new Scanner(domains);
         String line;
         List<String> lines = new ArrayList<>();
@@ -155,18 +155,21 @@ public class ServerFileManager {
         while(sc.hasNextLine()) {
             line = sc.nextLine();
             if(line.matches(domain + "," + userId + ",.*")) {
-                line = domain + "," + userId + "," + device;
+                line = domain + "," + userId + "," + device + "\n";
                 hasLine = true;
             }
-                
-                
             lines.add(line);
         }
-        if(!hasLine)
+        if(!hasLine) {
+            fw = new FileWriter(domains, true);
             fw.write(domain + "," + userId + "," + device + "\n");
-        else
+        }
+        else{
+            fw = new FileWriter(domains);
             for(String s: lines)
                 fw.write(s);
+        }
+            
         sc.close();
         fw.close();
     }
@@ -226,14 +229,15 @@ public class ServerFileManager {
 
     protected static String getImageFilename(String userId, Integer device)  throws FileNotFoundException{
         Scanner sc = new Scanner(photos);
-        String result = userId + "," + device + ",";
         while (sc.hasNextLine()) {
             String line = sc.nextLine();
             if(line.isEmpty())
                 continue;
-            if(line.matches(result)) {
+            if(line.matches(userId + "," + device + ",.*")) {
+                
                 sc.close();
-                return line.substring(result.length());
+                String[] result = line.split(",");
+                return result[2];
             }
         }
         sc.close();
@@ -241,7 +245,7 @@ public class ServerFileManager {
     }
 
     protected static void writeImageFilename(String userId, Integer device, String filename) throws IOException {
-        FileWriter fw = new FileWriter(photos,true);
+        FileWriter fw;
         Scanner sc = new Scanner(photos);
         boolean foundLine = false;
         List<String> lines = new ArrayList<>();
@@ -253,13 +257,18 @@ public class ServerFileManager {
             }
             lines.add(line);
         }
-        if(foundLine)
+        if(foundLine) {
+            fw = new FileWriter(photos);
             for(String s: lines) {
                 fw.write(s);    
             }
-        else
+        }
+        else {
+            fw = new FileWriter(photos,true);
             fw.write(userId + "," + device + "," + filename);
+        }
         
+        sc.close();
         fw.close();
     } 
 
@@ -271,7 +280,7 @@ public class ServerFileManager {
      */
     protected synchronized static void addDeviceToFile(String userId, Integer deviceId) throws IOException {
         FileWriter myWriter = new FileWriter(userDevices, true);
-        myWriter.write(userId + "," + Integer.toString(deviceId) + "\n");
+        myWriter.write(userId + "," + String.valueOf(deviceId) + "\n");
         myWriter.close();
     }
 
