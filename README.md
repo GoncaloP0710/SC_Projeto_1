@@ -1,4 +1,6 @@
 Erros por corrigir
 
-Quando o utilizador desconecta com um device e volta a conectar com esse mesmo device, o programa proíbe a utilização até que o utilizador insira o número de outro device
-As funções de temperatura não interajem com os ficheiros
+Comando RD não cria novo registo no domains.csv
+RT não escreve as temperaturas no ficheiro respetivo ao domínio
+RT lança uma exceção no IoTDevice
+Mapa tem cada utilizador com todos os devices e temps

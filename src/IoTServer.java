@@ -1,11 +1,13 @@
 package src;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.lang.reflect.Array;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 
@@ -449,12 +451,6 @@ public class IoTServer{
                 return;
             }
 
-            // Verifica se o ficheiro existe
-            if (!UtilsIoT.dataExist("ServerFiles/temps.txt")) {
-                outStream.writeObject("NODATA");
-                return;
-            }
-
             // Verifica se o user tem permissoes
             for(Domain domain: domains) {
                 if (domain.getName().equals(domainName)) {
@@ -465,14 +461,52 @@ public class IoTServer{
                     break;
                 }
             }
+            
+            // Get domain
+            Domain domain = null;
+            for(Domain domains: domains) {
+                if(domains.getName().equals(domainName)){
+                    domain = domains;
+                    break;
+                }
+            }
 
-            // Diferente de como fiz na TP -> Confirmar se esta bem
-            // TODO: Alteracoes ao ficheiro: ServerFiles/DomainTemps/(...).txt
-            // TODO: Ver se deve mudar para json ou algo diferente
             File fileToSend = new File("ServerFiles/DomainTemps/" + domainName + ".txt");
-            long size = fileToSend.length();
-            // ------------------------------------------------------------------------------------
+            FileWriter fw = new FileWriter("ServerFiles/DomainTemps/" + domainName + ".txt", false);
 
+            String temps = "Temperaturas do Domain " + domainName + "\n";
+
+            // Verifica NODATA e se existir edita o ficheiro das temps 
+            HashMap<String, ArrayList<Float[]>> mapinha = ServerFileManager.getUsersDevicesTemps();
+            
+            boolean pertence = false;
+            for (Map.Entry<String, ArrayList<Float[]>> entry : mapinha.entrySet()) {
+                String key = entry.getKey();
+                ArrayList<Float[]> value = entry.getValue();
+                for (Float[] array : value) {
+                    System.out.println("=========================================");
+                    System.out.println("userId: " + key + "\n");
+                    System.out.println("deviceId: " + String.valueOf(array[0].intValue()) + "\n");
+                    System.out.println("=========================================");
+                    if (domain.deviceBelongsTo(key,array[0].intValue())) {
+                        System.out.println("Encontrou alguem q pertence ao domain que enviou temp");
+                        pertence = true;
+                        String toConcat = "User " + key +" with device " + String.valueOf(array[0].intValue()) + " sent a temperature of " + String.valueOf(array[1]) + "\n";
+                        temps.concat(toConcat);
+                    }
+                }
+            }
+
+            if (!pertence) {
+                outStream.writeObject("NODATA");
+                fw.close();
+                return;
+            }
+
+            fw.write(temps);
+            fw.close();
+            
+            long size = fileToSend.length();
             outStream.writeLong(size);
             byte[] buffer = Files.readAllBytes(fileToSend.toPath());
             outStream.write(buffer);

@@ -213,13 +213,8 @@ public class ServerFileManager {
         }
         else {
             fw = new FileWriter(temps);
-            int length = lines.size();
             for(String line: lines) {
-                if (length != 1) 
                     fw.write(line + "\n", 0, line.length() + 1);
-                else
-                    fw.write(line, 0, line.length());
-                length--;
             }
         }
         
@@ -302,5 +297,28 @@ public class ServerFileManager {
         return devicesMap;
     }
 
-    
+    protected static synchronized HashMap<String,ArrayList<Float[]>> getUsersDevicesTemps() throws FileNotFoundException{
+        ArrayList<Float[]> listinha = new ArrayList<>();
+        HashMap<String, ArrayList<Float[]>> getUsersDevicesTemps = new HashMap<>();
+        Scanner sc = new Scanner(temps);
+        String line;
+        while(sc.hasNextLine()) {
+            line = sc.nextLine();
+            String[] keyValue = line.split(",");
+
+            if (getUsersDevicesTemps.get(keyValue[0]) == null) {
+                Float[] a = {Float.valueOf(keyValue[1]),Float.valueOf(keyValue[2])};
+                listinha.add(a);
+                getUsersDevicesTemps.put(keyValue[0], listinha);
+            } else {
+                Float[] a1 = {Float.valueOf(keyValue[1]),Float.valueOf(keyValue[2])};
+                ArrayList<Float[]> a2 = getUsersDevicesTemps.get(keyValue[0]);
+                a2.add(a1);
+                getUsersDevicesTemps.put(keyValue[0], a2);
+            }
+            
+        }
+        sc.close();
+        return getUsersDevicesTemps;
+    }
 }
