@@ -5,6 +5,7 @@ import java.lang.reflect.Array;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -170,7 +171,8 @@ public class IoTServer{
     
                         case "RI":
                             userImg = (String)inStream.readObject();
-                            sendImage(outStream, userImg, deviceId, userInfo[0]);
+                            String[] values = userImg.split(":");
+                            sendImage(outStream, values[0], Integer.valueOf(values[1]), userInfo[0]);
                             break;
     
                         default:
@@ -185,7 +187,7 @@ public class IoTServer{
                 ArrayList<Integer> devicesOnline = mapDevicesOnline.get(userId);
                 devicesOnline.remove(deviceId);
                 mapDevices.put(userId, devicesOnline);
-                e.printStackTrace();
+                // e.printStackTrace();
             }
         
         }
@@ -395,6 +397,8 @@ public class IoTServer{
                         return result;
                     }
                     domain.addDevice(userId, deviceId);
+                    ServerFileManager.writeToDomainsFile(domainName, userId, deviceId);
+
                     return result;
                 }
             }
@@ -402,9 +406,6 @@ public class IoTServer{
                 result = "NODM";
                 return result;
             }
-
-            // TODO: Ver se vai ficar assim
-            ServerFileManager.writeToDomainsFile(domainName, userId, deviceId);
             return result;
         }
 
@@ -454,7 +455,7 @@ public class IoTServer{
             // Verifica se o user tem permissoes
             for(Domain domain: domains) {
                 if (domain.getName().equals(domainName)) {
-                    if (!domain.userBelongsTo(userId)) {
+                    if (!domain.userBelongsTo(userId) || !domain.deviceBelongsTo(userId, deviceId)) {
                         outStream.writeObject("NOPERM");
                         return;
                     }
@@ -492,7 +493,8 @@ public class IoTServer{
                         System.out.println("Encontrou alguem q pertence ao domain que enviou temp");
                         pertence = true;
                         String toConcat = "User " + key +" with device " + String.valueOf(array[0].intValue()) + " sent a temperature of " + String.valueOf(array[1]) + "\n";
-                        temps.concat(toConcat);
+                        System.out.println(toConcat);
+                        temps = temps.concat(toConcat);
                     }
                 }
             }
@@ -503,15 +505,22 @@ public class IoTServer{
                 return;
             }
 
+            System.out.println("================================================= \n");
+            System.out.println(temps);
+
+
             fw.write(temps);
             fw.close();
             
+            
             long size = fileToSend.length();
-            outStream.writeLong(size);
+            //outStream.writeLong(size);
             byte[] buffer = Files.readAllBytes(fileToSend.toPath());
-            outStream.write(buffer);
+            //outStream.write(buffer);
 
-            outStream.writeObject("buffer");
+            //outStream.writeObject("buffer");
+
+            outStream.writeObject("OK, " + Long.toString(size) + " (long), " + temps);
         }
 
         /**
@@ -565,7 +574,7 @@ public class IoTServer{
             }
 
             // Verifica se o ficheiro existe
-            if (!UtilsIoT.dataExist("ServerFiles/ImageFiles" + userId + Integer.toString(deviceId) + ".jpg")) {
+            if (!UtilsIoT.dataExist("ServerFiles/ImageFiles/" + userId + Integer.toString(deviceId) + ".jpg")) {
                 outStream.writeObject("NODATA");
                 return;
             }
@@ -583,18 +592,24 @@ public class IoTServer{
                 outStream.writeObject("NOPERM");
                 return;
             }
+    
             String filename = ServerFileManager.getImageFilename(userId, deviceId);
-            // Envia a imagem
-            BufferedImage bImage = ImageIO.read(new File(filename));
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ImageIO.write(bImage, "jpg", bos );
-            byte [] data = bos.toByteArray();
-            
+            System.out.println(filename);
+            // Read image file into byte array
+            byte[] imageData = Files.readAllBytes(Paths.get("ServerFiles/ImageFiles/" + filename));
+
+            // Send image to server
             outStream.writeObject("OK");
+
+            outStream.writeObject("OK, " + Long.toString(imageData.length) + " (long)");
             outStream.writeObject(userId);
             outStream.writeInt(deviceId);
-            outStream.writeLong(data.length);
-            outStream.write(data);
+
+            outStream.writeObject(imageData);
+            outStream.flush();
+
+            System.out.println("Image sent to client.");
+            
         }
 
         /**

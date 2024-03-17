@@ -147,45 +147,33 @@ public class ServerFileManager {
     }
 
     protected static void writeToDomainsFile(String domain, String userId, Integer device) throws IOException {
-        FileWriter fw ;
         Scanner sc = new Scanner(domains);
         String line;
-        List<String> lines = new ArrayList<>();
         boolean hasLine = false;
         while(sc.hasNextLine()) {
             line = sc.nextLine();
-            if(line.matches(domain + "," + userId + ",.*")) {
-                line = domain + "," + userId + "," + device + "\n";
+            if(line.matches(domain + "," + userId + "," + device))
                 hasLine = true;
-            }
-            lines.add(line);
         }
         if(!hasLine) {
-            fw = new FileWriter(domains, true);
+            FileWriter fw = new FileWriter(domains, true);
             fw.write(domain + "," + userId + "," + device + "\n");
-        }
-        else{
-            fw = new FileWriter(domains);
-            for(String s: lines)
-                fw.write(s);
+            fw.close();
         }
             
         sc.close();
-        fw.close();
+        
     }
 
     protected void writeToDomainsFile(String domain, String userId) throws IOException {
         FileWriter fw = new FileWriter(domains, true);
         Scanner sc = new Scanner(domain);
         String line;
-        List<String> lines = new ArrayList<>();
         boolean hasLine = false;
         while(sc.hasNextLine()) {
             line = sc.nextLine();
             if(line.matches(domain + "," + userId + ",.*"))
                 hasLine = true;
-
-            lines.add(line);
         }
         if(!hasLine)
             fw.write("\n" + domain + "," + userId + ",-1");
@@ -298,7 +286,7 @@ public class ServerFileManager {
     }
 
     protected static synchronized HashMap<String,ArrayList<Float[]>> getUsersDevicesTemps() throws FileNotFoundException{
-        ArrayList<Float[]> listinha = new ArrayList<>();
+        
         HashMap<String, ArrayList<Float[]>> getUsersDevicesTemps = new HashMap<>();
         Scanner sc = new Scanner(temps);
         String line;
@@ -307,6 +295,7 @@ public class ServerFileManager {
             String[] keyValue = line.split(",");
 
             if (getUsersDevicesTemps.get(keyValue[0]) == null) {
+                ArrayList<Float[]> listinha = new ArrayList<>();
                 Float[] a = {Float.valueOf(keyValue[1]),Float.valueOf(keyValue[2])};
                 listinha.add(a);
                 getUsersDevicesTemps.put(keyValue[0], listinha);

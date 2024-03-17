@@ -198,23 +198,24 @@ public class IoTDevice {
             case "RT":
                 return (comands.length != 2) ? null : comands;
             case "RI":
-                return (comands.length != 3) ? null : comands;
+                return (comands.length != 2) ? null : comands;
             default:
                 return null;
             }   
     }
 
     private static void answerMidleware(String comando) throws ClassNotFoundException, IOException{
-        if(comando == "RI"){
+        if(comando.equals("RI")){
+            System.out.println("Entrou no RI");
+            System.out.println("Entrou sadasdaospsdao0'psodp RI");
             String resposta = (String)inStream.readObject();
-            if (resposta==("OK")) {
+            if (resposta.contains("OK")) {
                 getImgAnswer();
             } else {
                 System.out.println(resposta);
             }
-        } else if (comando == "RT") {
-            
         } else {
+            System.out.println("getDefaultAnswer");
             getDefaultAnswer();
         }
 
@@ -241,29 +242,27 @@ public class IoTDevice {
 
     private static void getImgAnswer() {
         try {
-            Long imgSize = (Long) inStream.readLong();
-            String userId = (String) inStream.readObject();
-            Integer deviceId = (Integer) inStream.readInt();
+
+    
+            String userId = (String)inStream.readObject();
+    
+			Integer deviceId = (Integer)inStream.readInt();
+        
+
             // Receive image from client
             byte[] imageData = (byte[]) inStream.readObject();
 
             // Save received image to a file
-            FileOutputStream fileOutputStream = new FileOutputStream("ClientFiles/ImageFiles/" + userId + Integer.toString(deviceId) + ".jpg");
+            FileOutputStream fileOutputStream = new FileOutputStream("UserFiles/" + userId + Integer.toString(deviceId) + ".jpg");
+    
             fileOutputStream.write(imageData);
+           
             fileOutputStream.close();
-            System.out.println("OK, " + Long.toString(imgSize) + " (long)");
+            System.out.println("Image received and saved.");
             ServerFileManager.writeImageFilename(userId, deviceId, userId + Integer.toString(deviceId) + ".jpg");
+
         } catch (Exception e) {
             System.out.println("Image not received due to an error.");
-        }
-    }
-
-    private static void getTxtAnswer() {
-        try {
-            String response = (String)inStream.readObject();
-            System.out.println(response);
-        } catch (ClassNotFoundException | IOException e) {
-            e.printStackTrace();
         }
     }
 }

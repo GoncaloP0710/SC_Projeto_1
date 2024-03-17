@@ -1,0 +1,4 @@
+Temperaturas do Domain ROOM01
+User Alex with device 2 sent a temperature of 20.0
+User Miguel with device 11 sent a temperature of 21.0
+User Miguel with device 14 sent a temperature of 12.0
