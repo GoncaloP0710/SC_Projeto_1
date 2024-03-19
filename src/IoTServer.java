@@ -1,7 +1,5 @@
 package src;
-import java.awt.image.BufferedImage;
 import java.io.*;
-import java.lang.reflect.Array;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -9,8 +7,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.imageio.ImageIO;
 
 public class IoTServer{
 
@@ -58,7 +54,8 @@ public class IoTServer{
 				newServerThread.start();
 		    }
 		    catch (IOException e) {
-		        e.printStackTrace();
+                sSoc.close();
+		        // e.printStackTrace();
 		    }
 		    
 		}
@@ -85,9 +82,6 @@ public class IoTServer{
 
                 // autenticar o utilizador
                 String[] userInfo = getUserInfo(inStream);
-
-        
-                
 
                 System.out.println("UserId: " + userInfo[0]);
                 System.out.println("UserPass: " + userInfo[1]);
@@ -124,7 +118,6 @@ public class IoTServer{
                 // }
                 // outStream.writeObject("OK-TESTED");
 
-                // TODO: Ctrl+C
                 String comand = (String)inStream.readObject();
                 String domainName;
                 String result;
@@ -172,6 +165,10 @@ public class IoTServer{
                         case "RI":
                             userImg = (String)inStream.readObject();
                             String[] values = userImg.split(":");
+                            if (values.length!=2 || !UtilsIoT.isInteger(values[1])) {
+                                outStream.writeObject("NOK");
+                                break;
+                            }
                             sendImage(outStream, values[0], Integer.valueOf(values[1]), userInfo[0]);
                             break;
     
@@ -350,15 +347,17 @@ public class IoTServer{
         private String addUserToDomain(String userIdToBeAdded, String userIdToAdd, String domainName) throws NullPointerException, IOException {
             String result = "OK";
             boolean hasUser = mapUsers.containsKey(userIdToBeAdded);
+
             if(!hasUser) {
                 result = "NOUSER";
                 return result;
             }
+
             boolean hasDomain = false;
             for(Domain domain: domains) {
                 if(domainName.equals(domain.getName())) {
                     hasDomain = true;
-                    if (!domain.isowner(userIdToAdd)) {
+                    if (!domain.isowner(userIdToAdd) || !domain.deviceBelongsTo(userIdToAdd, this.deviceId)) {
                         result = "NOPERM";
                         return result;
                     }
@@ -367,11 +366,11 @@ public class IoTServer{
                     return result;
                 }
             }
+
             if(!hasDomain) {
                 result = "NODM";
             }
 
-            // TODO: Alterar linha seguinte paara adicionar so o user e nao o device
             ServerFileManager.writeToDomainsFile(domainName, userIdToBeAdded, -1);
             return result;
         }
@@ -423,9 +422,7 @@ public class IoTServer{
 
                 System.out.println("Temperature recived from user: " + userId + " was: " + temperatureString + "\n");
 
-                // TODO: Verificar
                 ServerFileManager.writeTemperature(userId, deviceId, temperature);
-
 
                 return result;
             } catch (IOException | NumberFormatException | ClassNotFoundException e) {
@@ -485,15 +482,9 @@ public class IoTServer{
                 String key = entry.getKey();
                 ArrayList<Float[]> value = entry.getValue();
                 for (Float[] array : value) {
-                    System.out.println("=========================================");
-                    System.out.println("userId: " + key + "\n");
-                    System.out.println("deviceId: " + String.valueOf(array[0].intValue()) + "\n");
-                    System.out.println("=========================================");
                     if (domain.deviceBelongsTo(key,array[0].intValue())) {
-                        System.out.println("Encontrou alguem q pertence ao domain que enviou temp");
                         pertence = true;
                         String toConcat = "User " + key +" with device " + String.valueOf(array[0].intValue()) + " sent a temperature of " + String.valueOf(array[1]) + "\n";
-                        System.out.println(toConcat);
                         temps = temps.concat(toConcat);
                     }
                 }
@@ -505,22 +496,16 @@ public class IoTServer{
                 return;
             }
 
-            System.out.println("================================================= \n");
-            System.out.println(temps);
-
-
             fw.write(temps);
             fw.close();
             
-            
             long size = fileToSend.length();
-            //outStream.writeLong(size);
             byte[] buffer = Files.readAllBytes(fileToSend.toPath());
-            //outStream.write(buffer);
-
-            //outStream.writeObject("buffer");
 
             outStream.writeObject("OK, " + Long.toString(size) + " (long), " + temps);
+            
+            //TODO: Enviar o Ficheiro
+            System.out.println("File sent to client.");
         }
 
         /**
@@ -555,7 +540,6 @@ public class IoTServer{
         /**
          * Envia imagem do dispositivo <user_id>:<dev_id>
          * 
-         * https://www.tutorialspoint.com/How-to-convert-Image-to-Byte-Array-in-java
          * @param outStream Stream para enviar dados
          * @param userId userId do dispositivo a que pertence a imagem
          * @param deviceId deviceId do dispositivo a que pertence a imagem
@@ -564,7 +548,6 @@ public class IoTServer{
         private void sendImage(ObjectOutputStream outStream, String userId, Integer deviceId, String userIdToRecive) throws IOException {
 
             // Verifica se esse device id não existe
-            // TODO: Persistencia: Se o server morrer a lista dos diveces morre tb
             if (mapDevices.get(userId)==(null)) {
                 outStream.writeObject("NOID");
                 return;
@@ -582,7 +565,8 @@ public class IoTServer{
             // Verifica se o user tem permissoes
             boolean permissoes = false;
             for(Domain domain: domains) {
-                if (domain.hasPermissionToRead(userId, deviceId, userIdToRecive)) {
+                // TODO: Alterar o this e fazer chamar na funcao
+                if (domain.hasPermissionToRead(userId, deviceId, userIdToRecive, this.deviceId)) {
                     permissoes = true;
                     break;
                 }
@@ -595,12 +579,11 @@ public class IoTServer{
     
             String filename = ServerFileManager.getImageFilename(userId, deviceId);
             System.out.println(filename);
+
             // Read image file into byte array
             byte[] imageData = Files.readAllBytes(Paths.get("ServerFiles/ImageFiles/" + filename));
 
             // Send image to server
-            outStream.writeObject("OK");
-
             outStream.writeObject("OK, " + Long.toString(imageData.length) + " (long)");
             outStream.writeObject(userId);
             outStream.writeInt(deviceId);
@@ -609,7 +592,6 @@ public class IoTServer{
             outStream.flush();
 
             System.out.println("Image sent to client.");
-            
         }
 
         /**
@@ -626,13 +608,5 @@ public class IoTServer{
             }
             return false;
         }
-
-        // private void registerTemp(String userId, Integer deviceId, float temperature) throws FileNotFoundException, IOException {
-        //     for(Domain domain: domains){
-        //         if(domain.deviceBelongsTo(userId, deviceId)) {
-        //             ServerFileManager.writeTemperature(domain.getName(), userId, deviceId, temperature);
-        //         }
-        //     }
-        // }
     }
 }

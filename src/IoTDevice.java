@@ -1,5 +1,7 @@
 package src;
+import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -86,15 +88,20 @@ public class IoTDevice {
                 if(comands != null){
                     // enviar o pedido ao server
                     if(comands[0].equals("EI")){
-                        outStream.writeObject(comands[0]);
-                        sendImg(outStream, comands[1]);
+                        sendImg(outStream, comands[1], comands[0]);
                     } else{
                         for(int i = 0; i< comands.length; i++){
                             outStream.writeObject(comands[i]);
                         }
+                        if (comands[0].equals("RT")) {
+                            answerMidleware(comands[0], comands[1]);
+                        } else {
+                            answerMidleware(comands[0]);
+                        }
                     }
-                    answerMidleware(comands[0]);
+                    
                 } else {
+                    Thread.sleep(200);
                     System.out.println("invalid command! \n");
                 }
                 
@@ -102,9 +109,8 @@ public class IoTDevice {
             
             //------------------------------------------------------
 
-            
             sc.close();
-        } catch(IOException ie){
+        } catch(IOException | InterruptedException ie){
             System.out.println("IO error");
         }
     }
@@ -113,12 +119,14 @@ public class IoTDevice {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
                 try {
-                    Thread.sleep(200);
-                    System.out.println("Shutting down ...");
+                    Thread.sleep(0);
+                    
                     running = false;
+                    System.out.println("Shutting down...");
 
                     // TODO: Fechar tudo que e necessario
                     clientSocket.close();
+
 
                     //some cleaning up code...
     
@@ -141,7 +149,7 @@ public class IoTDevice {
     }
 
     private static String getAnswer() {
-        String s = sc.nextLine();
+        String s = sc.hasNextLine()?sc.nextLine():"";
         return s;
     }
 
@@ -206,56 +214,71 @@ public class IoTDevice {
 
     private static void answerMidleware(String comando) throws ClassNotFoundException, IOException{
         if(comando.equals("RI")){
-            System.out.println("Entrou no RI");
-            System.out.println("Entrou sadasdaospsdao0'psodp RI");
             String resposta = (String)inStream.readObject();
-            if (resposta.contains("OK")) {
+            System.out.println(resposta);
+            if (resposta.contains("OK") && !resposta.equals("NOK")) {
                 getImgAnswer();
-            } else {
-                System.out.println(resposta);
             }
         } else {
-            System.out.println("getDefaultAnswer");
-            getDefaultAnswer();
+            String resposta = getDefaultAnswer();
+            System.out.println(resposta);
         }
-
     }
 
-    private static void getDefaultAnswer() {
+    private static void answerMidleware(String comando, String fileName) throws IOException {
+        String resposta = getDefaultAnswer();
+        fileName = "./UserFiles/"+fileName+".txt";
+        saveFile(resposta,fileName);
+    }
+
+    private static String getDefaultAnswer() {
         try {
-            String response = (String)inStream.readObject();
-            System.out.println(response);
+            return(String)inStream.readObject();
         } catch (ClassNotFoundException | IOException e) {
             e.printStackTrace();
         }
+        return null;
     }
 
-    private static void sendImg(ObjectOutputStream outStream, String fileName) throws IOException {
+    private static void sendImg(ObjectOutputStream outStream, String fileName, String comando) {
         // Read image file into byte array
-        byte[] imageData = Files.readAllBytes(Paths.get("UserFiles/" + fileName));
+        byte[] imageData;
+        try {
+            imageData = Files.readAllBytes(Paths.get("UserFiles/" + fileName));
+            outStream.writeObject(comando);
 
-        // Send image to server
-        outStream.writeObject(imageData);
-        outStream.flush();
-        System.out.println("Image sent to server.");
+            // Send image to server
+            outStream.writeObject(imageData);
+            outStream.flush();
+            System.out.println("Image sent to server.");
+
+            answerMidleware(comando);
+            
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("NOK");
+            // e.printStackTrace();
+        }
     }
 
     private static void getImgAnswer() {
         try {
 
-    
             String userId = (String)inStream.readObject();
+            System.out.println(userId);
     
 			Integer deviceId = (Integer)inStream.readInt();
-        
+            System.out.println(String.valueOf(deviceId));
 
             // Receive image from client
             byte[] imageData = (byte[]) inStream.readObject();
+            System.out.println("imageData");
 
             // Save received image to a file
             FileOutputStream fileOutputStream = new FileOutputStream("UserFiles/" + userId + Integer.toString(deviceId) + ".jpg");
-    
+            System.out.println("fileOutputStream");
+
             fileOutputStream.write(imageData);
+            System.out.println("write(imageData)");
            
             fileOutputStream.close();
             System.out.println("Image received and saved.");
@@ -264,5 +287,12 @@ public class IoTDevice {
         } catch (Exception e) {
             System.out.println("Image not received due to an error.");
         }
+    }
+
+
+    private static void saveFile(String contents, String pathname) throws IOException{
+        FileWriter fw = new FileWriter(pathname, false);
+        fw.write(contents);
+        fw.close();
     }
 }

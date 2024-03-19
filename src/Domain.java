@@ -91,8 +91,8 @@ public class Domain {
      * @return
      * @requires  userId != null && deviceId != null && userIdReader && devicesList.get(userId) != null
      */
-    protected boolean hasPermissionToRead(String userId, Integer deviceId, String userIdReader) {
-        if (!userBelongsTo(userIdReader)) {
+    protected boolean hasPermissionToRead(String userId, Integer deviceId, String userIdReader, Integer deviceIdReader) {
+        if (!deviceBelongsTo(userIdReader, deviceIdReader)) {
             return  false;
         }
         return deviceBelongsTo(userId, deviceId);

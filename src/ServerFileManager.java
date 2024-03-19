@@ -243,12 +243,12 @@ public class ServerFileManager {
         if(foundLine) {
             fw = new FileWriter(photos);
             for(String s: lines) {
-                fw.write(s);    
+                fw.write(s + "\n");    
             }
         }
         else {
             fw = new FileWriter(photos,true);
-            fw.write(userId + "," + device + "," + filename);
+            fw.write(userId + "," + device + "," + filename + "\n");
         }
         
         sc.close();
@@ -309,5 +309,11 @@ public class ServerFileManager {
         }
         sc.close();
         return getUsersDevicesTemps;
+    }
+
+    protected boolean hasDuplicate(File f) {
+        boolean result = false;
+        
+        return result;
     }
 }

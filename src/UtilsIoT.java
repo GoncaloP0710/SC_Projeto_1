@@ -16,4 +16,14 @@ public class UtilsIoT {
         File f = new File(path);
         return (f.exists() && !f.isDirectory());
     }
+
+    public static boolean isInteger( String input ) {
+        try {
+            Integer.valueOf( input );
+            return true;
+        }
+        catch( NumberFormatException e ) {
+            return false;
+        }
+    }
 }
