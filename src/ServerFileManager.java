@@ -77,8 +77,6 @@ public class ServerFileManager {
         Domain single = null;
         while(sc.hasNextLine()) {
             line = sc.nextLine();
-            if(line.isEmpty())
-                continue;
             values = line.split(",");
             for(Domain d: domainsList) {
                 if(d.getName().equals(values[0])) {
@@ -86,7 +84,6 @@ public class ServerFileManager {
                     single = d;
                     break;
                 }
-
             }
             if(!hasDomain) {
                 single = new Domain(values[1], values[0]);
@@ -115,9 +112,13 @@ public class ServerFileManager {
      * @throws IOException
      */
     protected synchronized static void addUserToFile(String userId, String senha) throws IOException {
-        FileWriter myWriter = new FileWriter(users, true);
-        myWriter.write(userId + "," + senha + "\n");
-        myWriter.close();
+        String newLine = userId + ',' + senha + "\n";
+        if(!hasDuplicate(users, newLine)) {
+            FileWriter myWriter = new FileWriter(users, true);
+            myWriter.write(newLine);
+            myWriter.close();
+        }
+        
     }
 
 
@@ -133,8 +134,6 @@ public class ServerFileManager {
         String[] values;
         while(sc.hasNextLine()) {
             line = sc.nextLine();
-            if(line.isEmpty())
-                continue;
             values = line.split(",");
             if(values[0].equals(domainName)) {
                 fw.write("Domain: " + values[0] + ", Device: " + values[1] + ":" + values[2] + ", Temp: " + values[3] + "\n");
@@ -147,38 +146,21 @@ public class ServerFileManager {
     }
 
     protected static void writeToDomainsFile(String domain, String userId, Integer device) throws IOException {
-        Scanner sc = new Scanner(domains);
-        String line;
-        boolean hasLine = false;
-        while(sc.hasNextLine()) {
-            line = sc.nextLine();
-            if(line.matches(domain + "," + userId + "," + device))
-                hasLine = true;
-        }
-        if(!hasLine) {
+        String newLine = domain + "," + userId + "," + device + "\n";
+        if(!hasDuplicate(domains, newLine)) {
             FileWriter fw = new FileWriter(domains, true);
-            fw.write(domain + "," + userId + "," + device + "\n");
+            fw.write(newLine);
             fw.close();
         }
-            
-        sc.close();
-        
     }
 
     protected void writeToDomainsFile(String domain, String userId) throws IOException {
-        FileWriter fw = new FileWriter(domains, true);
-        Scanner sc = new Scanner(domain);
-        String line;
-        boolean hasLine = false;
-        while(sc.hasNextLine()) {
-            line = sc.nextLine();
-            if(line.matches(domain + "," + userId + ",.*"))
-                hasLine = true;
-        }
-        if(!hasLine)
+        String newLine = domain + "," + userId + ",.*";
+        if(!hasDuplicate(domains, newLine)) {
+            FileWriter fw = new FileWriter(domains, true);
             fw.write("\n" + domain + "," + userId + ",-1");
-        sc.close();
-        fw.close();
+            fw.close();
+        }
     }
 
     protected static void writeTemperature(String userId, Integer device, float F) throws FileNotFoundException, IOException {
@@ -262,9 +244,12 @@ public class ServerFileManager {
      * @throws IOException
      */
     protected synchronized static void addDeviceToFile(String userId, Integer deviceId) throws IOException {
-        FileWriter myWriter = new FileWriter(userDevices, true);
-        myWriter.write(userId + "," + String.valueOf(deviceId) + "\n");
-        myWriter.close();
+        String newLine = userId + "," + String.valueOf(deviceId) + "\n";
+        if(!hasDuplicate(userDevices, newLine)) {
+            FileWriter fw = new FileWriter(userDevices, true);
+            fw.write(newLine);
+            fw.close();
+        }
     }
 
     /**
@@ -311,9 +296,18 @@ public class ServerFileManager {
         return getUsersDevicesTemps;
     }
 
-    protected boolean hasDuplicate(File f) {
+    protected static boolean hasDuplicate(File f, String newLine) throws FileNotFoundException{
         boolean result = false;
-        
+        Scanner sc = new Scanner(f);
+        String line;
+        while (sc.hasNextLine()) {
+            line = sc.nextLine();
+            if(line.matches(newLine)) {
+                sc.close();
+                return true;
+            }
+        }
+        sc.close();
         return result;
     }
 }
