@@ -18,15 +18,18 @@ public class IoTDevice {
     static ObjectOutputStream outStream;
     static Scanner sc = new Scanner(System.in);
 
-    public static void main(String[] args) throws ClassNotFoundException {
+    public static void main(String[] args) {
         try{
             running = true;
-            setup();
             String serverAddress = args[0];
             String dev_id_s = args[1];
             String user_id = args[2];
             String[] serverAd = new String[2];
             int dev_id = Integer.parseInt(dev_id_s);
+            if (dev_id <= 0) {
+                throw new NumberFormatException("Device Id can't be used");
+            }
+            setup();
             if(serverAddress.contains(":")){
                 serverAd = serverAddress.split(":");
             } else{
@@ -112,6 +115,10 @@ public class IoTDevice {
             sc.close();
         } catch(IOException | InterruptedException ie){
             System.out.println("IO error");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (NumberFormatException e) {
+            System.out.println("Device Id can't be used");
         }
     }
 
