@@ -275,13 +275,10 @@ public class IoTDevice {
 
             // Save received image to a file
             FileOutputStream fileOutputStream = new FileOutputStream("UserFiles/" + userId + Integer.toString(deviceId) + ".jpg");
-            System.out.println("fileOutputStream");
 
             fileOutputStream.write(imageData);
-            System.out.println("write(imageData)");
            
             fileOutputStream.close();
-            System.out.println("Image received and saved.");
             ServerFileManager.writeImageFilename(userId, deviceId, userId + Integer.toString(deviceId) + ".jpg");
 
         } catch (Exception e) {
