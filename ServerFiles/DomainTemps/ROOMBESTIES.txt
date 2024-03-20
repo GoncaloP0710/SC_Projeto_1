@@ -1,3 +1,0 @@
-Temperaturas do Domain ROOMBESTIES
-User Alex with device 10 sent a temperature of 29.0
-User Miguel with device 2 sent a temperature of 12.3

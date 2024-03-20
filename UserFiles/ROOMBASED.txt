@@ -1,6 +1,0 @@
-OK, 298 (long), Temperaturas do Domain ROOMBASED
-User Alex with device 2 sent a temperature of 20.0
-User Martim with device 6 sent a temperature of 15.0
-User Martim with device 15 sent a temperature of 16.0
-User Miguel with device 11 sent a temperature of 22.0
-User Miguel with device 2 sent a temperature of 12.3

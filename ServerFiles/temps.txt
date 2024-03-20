@@ -1,2 +1,0 @@
-Domain: domain1, Device: alan:1, Temp: 9.0
-Domain: domain1, Device: miguel:1, Temp: 42.0
