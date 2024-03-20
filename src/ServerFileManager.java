@@ -220,7 +220,7 @@ public class ServerFileManager {
      * @throws IOException
      */
     protected synchronized static void addDeviceToFile(String userId, Integer deviceId) throws IOException {
-        String newLine = userId + "," + String.valueOf(deviceId) + "\n";
+        String newLine = userId + "," + deviceId + "\n";
         if(!hasDuplicate(userDevices, newLine)) {
             FileWriter fw = new FileWriter(userDevices, true);
             fw.write(newLine);
