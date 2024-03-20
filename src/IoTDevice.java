@@ -250,7 +250,6 @@ public class IoTDevice {
             // Send image to server
             outStream.writeObject(imageData);
             outStream.flush();
-            System.out.println("Image sent to server.");
 
             answerMidleware(comando);
             
@@ -271,7 +270,6 @@ public class IoTDevice {
 
             // Receive image from client
             byte[] imageData = (byte[]) inStream.readObject();
-            System.out.println("imageData");
 
             // Save received image to a file
             FileOutputStream fileOutputStream = new FileOutputStream("UserFiles/" + userId + Integer.toString(deviceId) + ".jpg");
@@ -282,7 +280,7 @@ public class IoTDevice {
             ServerFileManager.writeImageFilename(userId, deviceId, userId + Integer.toString(deviceId) + ".jpg");
 
         } catch (Exception e) {
-            System.out.println("Image not received due to an error.");
+            System.out.println("NOK");
         }
     }
 
