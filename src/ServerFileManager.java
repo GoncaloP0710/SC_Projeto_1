@@ -164,22 +164,12 @@ public class ServerFileManager {
     }
 
     protected static void writeTemperature(String userId, Integer device, float F) throws FileNotFoundException, IOException {
-        Scanner sc = new Scanner(temps);
-        List<String> lines = new ArrayList<>();
-        String newLine = userId + "," + device + ",";
-        boolean foundLine = false;
-        while (sc.hasNextLine()) {
-            String line = sc.nextLine();
-            if(line.matches(newLine + ".*")) {
-                line = newLine.concat(String.valueOf(F));
-                foundLine = true;
-            }
-            lines.add(line);
-        }
+        String lineMatch = userId + "," + device;
+        List<String> lines = getLines(temps, lineMatch, String.valueOf(F));
         FileWriter fw;
-        if(!foundLine) {
+        if(lines == null) {
             fw = new FileWriter(temps, true);
-            fw.write(newLine + String.valueOf(F) + "\n");
+            fw.write(lineMatch + "," + String.valueOf(F) + "\n");
         }
         else {
             fw = new FileWriter(temps);
@@ -189,7 +179,6 @@ public class ServerFileManager {
         }
         
         fw.close();
-        sc.close();
     }
 
     protected static String getImageFilename(String userId, Integer device)  throws FileNotFoundException{
@@ -199,7 +188,6 @@ public class ServerFileManager {
             if(line.isEmpty())
                 continue;
             if(line.matches(userId + "," + device + ",.*")) {
-                
                 sc.close();
                 String[] result = line.split(",");
                 return result[2];
@@ -211,29 +199,17 @@ public class ServerFileManager {
 
     protected static void writeImageFilename(String userId, Integer device, String filename) throws IOException {
         FileWriter fw;
-        Scanner sc = new Scanner(photos);
-        boolean foundLine = false;
-        List<String> lines = new ArrayList<>();
-        while (sc.hasNextLine()) {
-            String line = sc.nextLine();
-            if(line.matches(userId + "," + device + ",.*")) {
-                line = userId + "," + device + "," + filename;
-                foundLine = true;
-            }
-            lines.add(line);
-        }
-        if(foundLine) {
+        String lineMatch = userId + "," + device;
+        List<String> lines = getLines(photos, lineMatch, filename);
+        if(lines != null) {
             fw = new FileWriter(photos);
-            for(String s: lines) {
+            for(String s: lines)
                 fw.write(s + "\n");    
-            }
         }
         else {
             fw = new FileWriter(photos,true);
             fw.write(userId + "," + device + "," + filename + "\n");
         }
-        
-        sc.close();
         fw.close();
     } 
 
@@ -296,6 +272,15 @@ public class ServerFileManager {
         return getUsersDevicesTemps;
     }
 
+    /**
+     * Checks if a line already exists in a file so it prevents duplicates
+     * 
+     * @param f the csv file
+     * @param newLine the line that will be added to file
+     * @return true if the line already exists in the file
+     * @requires newLine != null
+     * @throws FileNotFoundException
+     */
     protected static boolean hasDuplicate(File f, String newLine) throws FileNotFoundException{
         boolean result = false;
         Scanner sc = new Scanner(f);
@@ -309,5 +294,30 @@ public class ServerFileManager {
         }
         sc.close();
         return result;
+    }
+
+    /**
+     * 
+     * @param f the file
+     * @param lineMatch the line to match a line in the file
+     * @param elem the element that will be added
+     * @return null if the line is not found, the whole file with the fixed line
+     * @requires elem != null && lineMatch != null
+     * @throws FileNotFoundException
+     */
+    protected static List<String> getLines(File f, String lineMatch, String elem) throws FileNotFoundException{
+        List<String> lines = new ArrayList<>(); 
+        Scanner sc = new Scanner(f);
+        boolean foundLine = false;
+        while (sc.hasNextLine()) {
+            String line = sc.nextLine();
+            if(line.matches(lineMatch + ",.*")) {
+                line = lineMatch + "," + elem;
+                foundLine = true;
+            }
+            lines.add(line);
+        }
+        sc.close();
+        return foundLine?lines:null;
     }
 }
