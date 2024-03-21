@@ -50,21 +50,26 @@ public class IoTDevice {
             String senha = pedeSenha();
 
             String response_info = sendInfo(user_id, senha, inStream, outStream);
-
+            System.out.println(response_info);
             //2
             while(response_info.equals("WRONG-PWD") ){
                 senha = pedeSenha();
                 response_info = sendInfo(user_id, senha, inStream, outStream);
+                System.out.println(response_info);
+
             }
 
             //3
             String response_dev = send_device_id(dev_id, inStream, outStream);
+            System.out.println(response_dev);
             
             while(response_dev.equals("NOK-DEVID") ){
                 System.out.println("Esse device esta a ser utilizado por outro cliente \n");
                 System.out.println("Escolha outro device: \n");
                 dev_id = Integer.parseInt(getAnswer());
                 response_dev = send_device_id(dev_id, inStream, outStream);
+                System.out.println(response_dev);
+
             }
             //--------------------------------------------------------------
 
@@ -234,8 +239,12 @@ public class IoTDevice {
 
     private static void answerMidleware(String comando, String fileName) throws IOException {
         String resposta = getDefaultAnswer();
-        fileName = "./UserFiles/"+fileName+".txt";
-        saveFile(resposta,fileName);
+        if(resposta.matches("OK.*")) {
+            fileName = "./UserFiles/"+fileName+".txt";
+            saveFile(resposta,fileName);
+        }
+        else
+            System.out.println(resposta);
     }
 
     private static String getDefaultAnswer() {
@@ -284,7 +293,6 @@ public class IoTDevice {
             fileOutputStream.write(imageData);
            
             fileOutputStream.close();
-            ServerFileManager.writeImageFilename(userId, deviceId, userId + Integer.toString(deviceId) + ".jpg");
 
         } catch (Exception e) {
             System.out.println("NOK");

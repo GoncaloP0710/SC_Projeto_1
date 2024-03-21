@@ -370,8 +370,6 @@ public class IoTServer{
             if(!hasDomain) {
                 result = "NODM";
             }
-
-            ServerFileManager.writeToDomainsFile(domainName, userIdToBeAdded, -1);
             return result;
         }
 
