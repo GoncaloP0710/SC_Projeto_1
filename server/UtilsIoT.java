@@ -1,4 +1,4 @@
-package src;
+package server;
 import java.io.File;
 
 public class UtilsIoT {

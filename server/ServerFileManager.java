@@ -1,7 +1,9 @@
-package src;
+package server;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,6 +16,7 @@ public class ServerFileManager {
     private static final File users = new File("ServerFiles\\user.csv");
     private static final File domains = new File("ServerFiles\\domains.csv");
     private static final File userDevices = new File("ServerFiles\\userdevices.csv");
+    private static final File testFiles = new File("ServerFiles\\testFile.csv");
     
 
     private static final File temps = new File("ServerFiles\\temps.csv");
@@ -319,5 +322,18 @@ public class ServerFileManager {
         }
         sc.close();
         return foundLine?lines:null;
+    }
+
+    public static String[] getFileInfo() {
+        String[] fileInfo = new String[2];
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(testFiles));
+            fileInfo[0] = reader.readLine();
+            fileInfo[1] = reader.readLine();
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return fileInfo;
     }
 }

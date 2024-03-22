@@ -1,4 +1,4 @@
-package src;
+package client;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -74,18 +74,23 @@ public class IoTDevice {
             //--------------------------------------------------------------
 
             //5
-            // String fileName = IoTDevice.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-            // File jarFile = new File(fileName);
-            // long tamanho = getFileSize(jarFile);
+            String fileName = "./IoTDevice.jar";
+            File jar = new File(fileName);
+            long tamanhoL = jar.length();
+            String tamanhoS = Long.toString(tamanhoL);
+            System.out.println(tamanhoL);
 
-            // String response_file = send_file_info(tamanho, fileName, inStream, outStream);
+            String response_file = send_file_info(tamanhoS, fileName, inStream, outStream);
 
             //6
-            // if (response_file == "NOK-TESTED") {
-            //     clientSocket.close();
-            //     System.out.println("Cliente nao validado pelo servidor");
-            //     System.exit(0);
-            // }
+            if (response_file.equals("NOK-TESTED") ) {
+                clientSocket.close();
+                sc.close();
+                inStream.close();
+                outStream.close();
+                System.out.println("Cliente nao validado pelo servidor");
+                System.exit(0);
+            }
 
             //7 Imprimir menu de comandos
             interfaceIO();
@@ -125,6 +130,13 @@ public class IoTDevice {
         } catch (NumberFormatException e) {
             System.out.println("Device Id can't be used");
         }
+    }
+
+    private static String send_file_info(String tamanhoS, String fileName, ObjectInputStream in,
+            ObjectOutputStream out) throws IOException {
+        out.writeObject(fileName);
+        out.writeObject(tamanhoS);
+        return recebe(in);
     }
 
     private static void setup() {

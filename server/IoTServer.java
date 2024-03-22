@@ -1,4 +1,4 @@
-package src;
+package server;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -112,11 +112,11 @@ public class IoTServer{
                 this.deviceId = deviceId;
 
                 // Verificar integridade dos dados
-                // if (!verifyEXEC(inStream)) {
-                //     outStream.writeObject("NOK-TESTED");
-                //     stop(); // TODO: Ver depois
-                // }
-                // outStream.writeObject("OK-TESTED");
+                if (!verifyEXEC(inStream)) {
+                    outStream.writeObject("NOK-TESTED");
+                    return;
+                }
+                outStream.writeObject("OK-TESTED");
 
                 String comand = (String)inStream.readObject();
                 String domainName;
@@ -303,10 +303,12 @@ public class IoTServer{
          * @throws ClassNotFoundException 
          */
         private boolean verifyEXEC(ObjectInputStream inStream) throws ClassNotFoundException, IOException {
-            File file = new File("ServerFiles/IoTDevice.class");
             String fileName = (String)inStream.readObject();
-			long fileSize = (Long)inStream.readObject();
-            if (file.getName().equals(fileName) && file.length()==(fileSize)) {
+			String fileSize = (String)inStream.readObject();
+
+            String fileInfo[] = ServerFileManager.getFileInfo();
+
+            if (fileName.equals(fileInfo[0]) && fileSize.equals(fileInfo[1])) {
                 return true;
             }
             return false;
