@@ -10,6 +10,12 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Scanner;
 
+/**
+ * 
+ * @author André Reis fc58192
+ * @author Gonçalo Pinto fc58178
+ * @author Jose Bras fc55449
+ */
 public class IoTDevice {
 
     static boolean running;
@@ -152,7 +158,6 @@ public class IoTDevice {
                     running = false;
                     System.out.println("Shutting down...");
 
-                    // TODO: Fechar tudo que e necessario
                     clientSocket.close();
 
 

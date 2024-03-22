@@ -2,6 +2,11 @@ package server;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * @author André Reis fc58192
+ * @author Gonçalo Pinto fc58178
+ * @author José Brás fc55449
+ */
 public class Domain {
 
     private String domainName;
@@ -33,6 +38,7 @@ public class Domain {
     }
 
     /**
+     * Retorna true se o use
      * 
      * @param userId the user's name
      * @return true if user belongs to the domain
@@ -41,6 +47,7 @@ public class Domain {
         return userList.contains(userId);
     }
     /**
+     * Retorna nome do domain
      * 
      * @return the domain's name 
      */
@@ -49,6 +56,7 @@ public class Domain {
     }
 
     /**
+     * Adiciona um user ao domain
      * 
      * @param user the user's name
      */
@@ -60,6 +68,7 @@ public class Domain {
     }
 
     /**
+     * Adiciona um device ao domain
      * 
      * @param user the user's name
      * @param deviceId the device's number
@@ -76,6 +85,7 @@ public class Domain {
     }
 
     /**
+     * Seta um owner
      * 
      * @param owner the owner's name
      */
@@ -84,6 +94,7 @@ public class Domain {
     }
 
     /**
+     * Verifica se o user:device tem permissao de leitura
      * 
      * @param userId the user that will read
      * @param deviceId the device of the user that will read
@@ -99,6 +110,7 @@ public class Domain {
     }
 
     /**
+     * Retorna true se o device pertence ao user 
      * 
      * @param userId the user
      * @param deviceId the device
@@ -112,11 +124,20 @@ public class Domain {
         return devicesList.get(userId).contains(deviceId);
     }
 
-
+    /**
+     * Devolve lista de users
+     * 
+     * @return lista de users
+     */
     protected ArrayList<String> getUserList() {
         return userList;
     }
 
+    /**
+     * Devolve lista de devices
+     * 
+     * @return lista de devices
+     */
     protected HashMap<String, ArrayList<Integer>> getDevicesList() {
         return devicesList;
     }

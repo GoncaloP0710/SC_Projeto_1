@@ -11,6 +11,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * Builds a connection between server and files
+ * 
+ * @author André Reis fc58192
+ * @author Gonçalo Pinto fc58178
+ * @author José Brás fc55449
+ */
 public class ServerFileManager {
 
     private static final File users = new File("ServerFiles\\user.csv");
@@ -23,9 +30,11 @@ public class ServerFileManager {
     private static final File photos = new File("ServerFiles\\photos.csv");
 
     /**
+     * Gets all the users from User's Files
      * 
-     * 
-     * @return
+     * @return all the users from User's Files
+     * @requires users != null
+     * @ensures \result != null
      * @throws FileNotFoundException
      */
     protected static synchronized HashMap<String,String> getUsers() throws FileNotFoundException{
@@ -44,6 +53,14 @@ public class ServerFileManager {
         return usersMap;
     }
 
+    /**
+     * Gets all devices from userdevices
+     * 
+     * @requires userdevices != null
+     * @ensures \result != null
+     * @return all devices from userdevices
+     * @throws FileNotFoundException
+     */
     protected static synchronized HashMap<String,ArrayList<Integer>> getUsersDevices() throws FileNotFoundException{
         HashMap<String,ArrayList<Integer>> usersDevicesMap = new HashMap<>();
         Scanner sc = new Scanner(userDevices);
@@ -67,8 +84,11 @@ public class ServerFileManager {
     }
 
     /**
+     * Gets all domains and information about domains
      * 
-     * @return
+     * @return all domains and information about domains
+     * @requires domains != null
+     * @ensures \result != null
      * @throws FileNotFoundException
      */
     protected synchronized static ArrayList<Domain> getDomains() throws FileNotFoundException{
@@ -109,9 +129,11 @@ public class ServerFileManager {
     }
 
     /**
+     * Adds a user to users
      * 
-     * @param userId
-     * @param senha
+     * @param userId the user's Id
+     * @param senha the password
+     * @requires userId != null && senha != null
      * @throws IOException
      */
     protected synchronized static void addUserToFile(String userId, String senha) throws IOException {
@@ -126,8 +148,13 @@ public class ServerFileManager {
 
 
     /**
+     * Gets all temperatures from the file temperature
      * 
-     * @return
+     * @param domainName the name of the domain
+     * @param userId the user's ID
+     * @param deviceList the list of the devices beloging to the user
+     * @return all temperatures from the file temperature
+     * @requires domainName != null && userID != null && deviceList != null && deviceList.length() > 1
      * @throws IOException
      */
     protected synchronized File getTemperaturesFile(String domainName, String userID, ArrayList<Integer> deviceList) throws IOException{
@@ -148,6 +175,15 @@ public class ServerFileManager {
         return temps;
     }
 
+    /**
+     * Adds a domain, a user and a device to the file domains.csv
+     * 
+     * @param domain the name of the domain
+     * @param userId the user's Id
+     * @param device the device
+     * @requires domain != null && userId != null && device != null
+     * @throws IOException
+     */
     protected static void writeToDomainsFile(String domain, String userId, Integer device) throws IOException {
         String newLine = domain + "," + userId + "," + device + "\n";
         if(!hasDuplicate(domains, newLine)) {
@@ -157,6 +193,14 @@ public class ServerFileManager {
         }
     }
 
+    /**
+     * Adds a domain, a user and the deafault device -1 to the file domains.csv
+     * 
+     * @param domain the name of the domain
+     * @param userId the user's Id
+     * @requires domain != null && userId != null
+     * @throws IOException
+     */
     protected void writeToDomainsFile(String domain, String userId) throws IOException {
         String newLine = domain + "," + userId + ",.*";
         if(!hasDuplicate(domains, newLine)) {
@@ -166,6 +210,16 @@ public class ServerFileManager {
         }
     }
 
+    /**
+     * Adds a temperature to the file temps.csv
+     * 
+     * @param userId the user's id
+     * @param device the device
+     * @param F the temperature in float
+     * @requires userId != null && device != null
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
     protected static void writeTemperature(String userId, Integer device, float F) throws FileNotFoundException, IOException {
         String lineMatch = userId + "," + device;
         List<String> lines = getLines(temps, lineMatch, String.valueOf(F));
@@ -184,6 +238,16 @@ public class ServerFileManager {
         fw.close();
     }
 
+    /**
+     * Gets the image's filename from a user's device in the file phtos.csv
+     * 
+     * @param  the user's id
+     * @param device the device
+     * @return the image's filename
+     * @requires userId != null && device != null
+     * @ensures \result != null
+     * @throws FileNotFoundException
+     */
     protected static String getImageFilename(String userId, Integer device)  throws FileNotFoundException{
         Scanner sc = new Scanner(photos);
         while (sc.hasNextLine()) {
@@ -200,6 +264,15 @@ public class ServerFileManager {
         return "NODATA";
     }
 
+    /**
+     * Adds the filename to the file photos.csv
+     * 
+     * @param userId the user's id
+     * @param device the device
+     * @param filename the name of the file
+     * @requires userId != null && device != null && filename != null
+     * @throws IOException
+     */
     protected static void writeImageFilename(String userId, Integer device, String filename) throws IOException {
         FileWriter fw;
         String lineMatch = userId + "," + device;
@@ -217,9 +290,11 @@ public class ServerFileManager {
     } 
 
     /**
+     * Adds device to file usersdevice
      * 
-     * @param userId
-     * @param deviceId
+     * @param userId the user's id
+     * @param deviceId the device's id
+     * @requires userId != null && deviceId != null
      * @throws IOException
      */
     protected synchronized static void addDeviceToFile(String userId, Integer deviceId) throws IOException {
@@ -232,9 +307,10 @@ public class ServerFileManager {
     }
 
     /**
+     * Gets all devices from the file userdevices
      * 
-     * 
-     * @return
+     * @return all devices from the file userdevices
+     * @ensures \result != null
      * @throws FileNotFoundException
      */
     protected static synchronized HashMap<String,Integer> getDevices() throws FileNotFoundException{
@@ -249,6 +325,12 @@ public class ServerFileManager {
         return devicesMap;
     }
 
+    /**
+     * Gets the temperatures of all users
+     * 
+     * @return temperatures of all users
+     * @throws FileNotFoundException
+     */
     protected static synchronized HashMap<String,ArrayList<Float[]>> getUsersDevicesTemps() throws FileNotFoundException{
         
         HashMap<String, ArrayList<Float[]>> getUsersDevicesTemps = new HashMap<>();
@@ -284,7 +366,7 @@ public class ServerFileManager {
      * @requires newLine != null
      * @throws FileNotFoundException
      */
-    protected static boolean hasDuplicate(File f, String newLine) throws FileNotFoundException{
+    private static boolean hasDuplicate(File f, String newLine) throws FileNotFoundException{
         boolean result = false;
         Scanner sc = new Scanner(f);
         String line;
@@ -300,6 +382,7 @@ public class ServerFileManager {
     }
 
     /**
+     * Avoids repetition on files that need the lines to be changed in the middle of the file
      * 
      * @param f the file
      * @param lineMatch the line to match a line in the file
@@ -308,7 +391,7 @@ public class ServerFileManager {
      * @requires elem != null && lineMatch != null
      * @throws FileNotFoundException
      */
-    protected static List<String> getLines(File f, String lineMatch, String elem) throws FileNotFoundException{
+    private static List<String> getLines(File f, String lineMatch, String elem) throws FileNotFoundException{
         List<String> lines = new ArrayList<>(); 
         Scanner sc = new Scanner(f);
         boolean foundLine = false;
@@ -324,6 +407,11 @@ public class ServerFileManager {
         return foundLine?lines:null;
     }
 
+    /**
+     * Devolve info sobre ficheiro jar a ser verificado
+     * 
+     * @return info sobre ficheiro jar a ser verificado
+     */
     public static String[] getFileInfo() {
         String[] fileInfo = new String[2];
         try {

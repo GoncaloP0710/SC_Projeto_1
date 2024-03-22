@@ -8,6 +8,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @author André Reis fc58192
+ * @author Gonçalo Pinto fc58178
+ * @author José Brás fc55449
+ */
 public class IoTServer{
 
     HashMap<String, String> mapUsers = new HashMap<>();
@@ -33,6 +38,12 @@ public class IoTServer{
         }
 	}
 
+    /**
+     * Começa o server
+     * 
+     * @param socket socket do servidor
+     * @throws IOException
+     */
 	public void startServer (Integer socket) throws IOException{
 		ServerSocket sSoc = null;
         mapUsers = ServerFileManager.getUsers();
@@ -55,11 +66,9 @@ public class IoTServer{
 		    }
 		    catch (IOException e) {
                 sSoc.close();
-		        // e.printStackTrace();
 		    }
 		    
 		}
-		// sSoc.close();
 	}
 
     //Threads utilizadas para comunicacao com os clientes
@@ -73,7 +82,8 @@ public class IoTServer{
 			socket = inSoc;
 			System.out.println("thread do server para cada cliente");
 		}
- 
+
+        // Corre a thread do server
 		public void run(){
 			
             try {
@@ -184,7 +194,6 @@ public class IoTServer{
                 ArrayList<Integer> devicesOnline = mapDevicesOnline.get(userId);
                 devicesOnline.remove(deviceId);
                 mapDevices.put(userId, devicesOnline);
-                // e.printStackTrace();
             }
         
         }
@@ -339,6 +348,7 @@ public class IoTServer{
         }
 
         /**
+         *  Adiciona um user a um domain
          * 
          * @param userID the user's id to be added
          * @param domainName the domain's name 
@@ -381,7 +391,7 @@ public class IoTServer{
          * @param userId userId do device a adicionar
          * @param deviceId deviceId a adicionar
          * @param domainName domain a qual o device vai ser adicionado
-         * @return
+         * @return String indicando a resposta do server
          * @throws NullPointerException
          * @throws IOException 
          */
@@ -500,11 +510,9 @@ public class IoTServer{
             fw.close();
             
             long size = fileToSend.length();
-            byte[] buffer = Files.readAllBytes(fileToSend.toPath());
+            // byte[] buffer = Files.readAllBytes(fileToSend.toPath());
 
             outStream.writeObject("OK, " + Long.toString(size) + " (long), " + temps);
-            
-            //TODO: Enviar o Ficheiro
             System.out.println("File sent to client.");
         }
 
@@ -565,7 +573,6 @@ public class IoTServer{
             // Verifica se o user tem permissoes
             boolean permissoes = false;
             for(Domain domain: domains) {
-                // TODO: Alterar o this e fazer chamar na funcao
                 if (domain.hasPermissionToRead(userId, deviceId, userIdToRecive, this.deviceId) || userId.equals(userIdToRecive)) {
                     permissoes = true;
                     break;
