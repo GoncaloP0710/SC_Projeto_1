@@ -566,7 +566,7 @@ public class IoTServer{
             boolean permissoes = false;
             for(Domain domain: domains) {
                 // TODO: Alterar o this e fazer chamar na funcao
-                if (domain.hasPermissionToRead(userId, deviceId, userIdToRecive, this.deviceId)) {
+                if (domain.hasPermissionToRead(userId, deviceId, userIdToRecive, this.deviceId) || userId.equals(userIdToRecive)) {
                     permissoes = true;
                     break;
                 }

@@ -21,6 +21,9 @@ public class IoTDevice {
     public static void main(String[] args) {
         try{
             running = true;
+
+            if(args.length != 3)
+                throw new ArrayIndexOutOfBoundsException("IoTDevice <serverAddress> <dev-id> <user-id>");
             String serverAddress = args[0];
             String dev_id_s = args[1];
             String user_id = args[2];
@@ -78,7 +81,6 @@ public class IoTDevice {
             File jar = new File(fileName);
             long tamanhoL = jar.length();
             String tamanhoS = Long.toString(tamanhoL);
-            System.out.println(tamanhoL);
 
             String response_file = send_file_info(tamanhoS, fileName, inStream, outStream);
 
@@ -88,10 +90,10 @@ public class IoTDevice {
                 sc.close();
                 inStream.close();
                 outStream.close();
-                System.out.println("Cliente nao validado pelo servidor");
+                System.out.println("NOK-TESTED \n Cliente nao validado pelo servidor");
                 System.exit(0);
             }
-
+            System.out.println("OK-TESTED");
             //7 Imprimir menu de comandos
             interfaceIO();
 
@@ -129,6 +131,8 @@ public class IoTDevice {
             e.printStackTrace();
         } catch (NumberFormatException e) {
             System.out.println("Device Id can't be used");
+        } catch (ArrayIndexOutOfBoundsException e) {
+            System.out.println("IoTDevice <serverAddress> <dev-id> <user-id>");
         }
     }
 
@@ -157,6 +161,8 @@ public class IoTDevice {
                 } catch (InterruptedException | IOException e) {
                     Thread.currentThread().interrupt();
                     e.printStackTrace();
+                }  catch (NullPointerException e) {
+                    System.out.println("Incorrect port");
                 }
             }
         });
@@ -291,10 +297,8 @@ public class IoTDevice {
         try {
 
             String userId = (String)inStream.readObject();
-            System.out.println(userId);
     
 			Integer deviceId = (Integer)inStream.readInt();
-            System.out.println(String.valueOf(deviceId));
 
             // Receive image from client
             byte[] imageData = (byte[]) inStream.readObject();
