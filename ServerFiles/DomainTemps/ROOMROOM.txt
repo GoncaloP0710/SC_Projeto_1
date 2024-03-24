@@ -1,3 +1,0 @@
-Temperaturas do Domain ROOMROOM
-User Alex with device 3 sent a temperature of 90.0
-User Miguel with device 12 sent a temperature of 15.9

@@ -1,4 +1,0 @@
-OK, 187 (long), Temperaturas do Domain ROOM01
-User Alex with device 2 sent a temperature of 30.0
-User Miguel with device 3 sent a temperature of 20.0
-User Miguel with device 4 sent a temperature of 10.0
