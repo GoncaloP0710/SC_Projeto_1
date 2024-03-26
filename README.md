@@ -7,8 +7,8 @@ José Brás fc55449
 Compilar:
 
 javac server/*.java client/*.java
-jar cfe .\IoTServer.jar server.IoTServer server/*.class
-jar cfe ./IoTDevice.jar client.IoTDevice .\client/*.class
+jar cfe IoTServer.jar server.IoTServer server/*.class
+jar cfe IoTDevice.jar client.IoTDevice client/*.class
 
 Executar:
 
@@ -19,4 +19,4 @@ java -jar IoTDevice.jar
 
 Limitações do trabalho:
 
-O trabalho não apresenta limitações
+Após compilar, o tamanho do ficheiro IoTDevice.jar pode ser diferente do especificado para o server em testFile.csv dependendo da máquina onde é compilado.
