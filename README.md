@@ -20,3 +20,4 @@ java -jar IoTDevice.jar
 Limitações do trabalho:
 
 Após compilar, o tamanho do ficheiro IoTDevice.jar pode ser diferente do especificado para o server em testFile.csv dependendo da máquina onde é compilado.
+O tamanho escrito "5719" é o tamanho jar quando compilado nas máquinas do laboratório da FCUL
