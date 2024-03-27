@@ -20,14 +20,14 @@ import java.util.Scanner;
  */
 public class ServerFileManager {
 
-    private static final File users = new File("ServerFiles\\user.csv");
-    private static final File domains = new File("ServerFiles\\domains.csv");
-    private static final File userDevices = new File("ServerFiles\\userdevices.csv");
-    private static final File testFiles = new File("ServerFiles\\testFile.csv");
+    private static final File users = new File("ServerFiles/user.csv");
+    private static final File domains = new File("ServerFiles/domains.csv");
+    private static final File userDevices = new File("ServerFiles/userdevices.csv");
+    private static final File testFiles = new File("ServerFiles/testFile.csv");
     
 
-    private static final File temps = new File("ServerFiles\\temps.csv");
-    private static final File photos = new File("ServerFiles\\photos.csv");
+    private static final File temps = new File("ServerFiles/temps.csv");
+    private static final File photos = new File("ServerFiles/photos.csv");
 
     /**
      * Gets all the users from User's Files
